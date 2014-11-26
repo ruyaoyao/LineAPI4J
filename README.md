@@ -41,6 +41,10 @@ see example App.java in io.cslinmiso.line.LineAPI4J
 
 * *TODO update usage of api*
 
+ScreenShot
+========
+![List of contacts.](http://cslinmiso.github.io/img/LineAPI4J/LineAPI4J.png)
+
 License
 ========
 This project is under [MIT license](http://www.opensource.org/licenses/mit-license.php).
