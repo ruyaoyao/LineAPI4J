@@ -38,6 +38,7 @@ see example App.java in io.cslinmiso.line.LineAPI4J
 
 * *TODO fix some problems*
 * *TODO update usage of api*
+
 ScreenShot
 ========
 ![List of contacts.](http://cslinmiso.github.io/img/LineAPI4J/LineAPI4J.png)
