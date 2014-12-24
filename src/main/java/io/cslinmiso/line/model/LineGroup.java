@@ -67,7 +67,7 @@ public class LineGroup extends LineBase {
      */
     this.setClient(client);
     this.setGroup(group);
-
+    this.setName(group.getName());
     this.setId(group.getId());
 
     this.setJoined(isJoined);
@@ -85,9 +85,11 @@ public class LineGroup extends LineBase {
 
 
     this.invitee.clear();
-    if (group.getInvitee().size() >= 1) {
-      for (Contact member : group.getInvitee()) {
-        this.invitee.add(new LineContact(client, member));
+    if(group.getInvitee()!=null){
+      if (group.getInvitee().size() >= 1) {
+        for (Contact member : group.getInvitee()) {
+          this.invitee.add(new LineContact(client, member));
+        }
       }
     }
   }

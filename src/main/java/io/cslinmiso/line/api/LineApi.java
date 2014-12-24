@@ -77,6 +77,10 @@ public interface LineApi {
   /** The Constant LINE_SESSION_NAVER_URL. */
   public static final String LINE_SESSION_NAVER_URL = LINE_DOMAIN + "/authct/v1/keys/naver";
 
+  public static final String LINE_OBJECT_STORAGE_URL = "http://os.line.naver.jp/os/m/";
+  
+  public static final String LINE_STICKER_URL        = "http://dl.stickershop.line.naver.jp/products/0/0/";
+  
   /** The Constant DATE_PATTERN. */
   public static final String DATE_PATTERN = "yyyyMMdd";
 
@@ -110,142 +114,142 @@ public interface LineApi {
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_findAndAddContactsByUserid(int, java.lang.String)
    */
-  public abstract Map<String, Contact> _findAndAddContactsByUserid(int reqSeq, String userid)
+  public abstract Map<String, Contact>  findAndAddContactsByUserid(int reqSeq, String userid)
       throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_findAndAddContactsByEmail(int, java.util.Set)
    */
-  public abstract Map<String, Contact> _findAndAddContactsByEmail(int reqSeq, Set<String> emails)
+  public abstract Map<String, Contact>  findAndAddContactsByEmail(int reqSeq, Set<String> emails)
       throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_findAndAddContactsByPhone(int, java.util.Set)
    */
-  public abstract Map<String, Contact> _findAndAddContactsByPhone(int reqSeq, Set<String> phone)
+  public abstract Map<String, Contact>  findAndAddContactsByPhone(int reqSeq, Set<String> phone)
       throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getProfile()
    */
-  public abstract Profile _getProfile() throws TalkException, TException;
+  public abstract Profile  getProfile() throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getAllContactIds()
    */
-  public abstract List<String> _getAllContactIds() throws TalkException, TException;
+  public abstract List<String>  getAllContactIds() throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getBlockedContactIds()
    */
-  public abstract List<String> _getBlockedContactIds() throws TalkException, TException;
+  public abstract List<String>  getBlockedContactIds() throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getHiddenContactIds()
    */
-  public abstract List<String> _getHiddenContactIds() throws TalkException, TException;
+  public abstract List<String>  getHiddenContactIds() throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getContacts(java.util.List)
    */
-  public abstract List<Contact> _getContacts(List<String> ids) throws TalkException, TException;
+  public abstract List<Contact>  getContacts(List<String> ids) throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_createRoom(int, java.util.List)
    */
-  public abstract Room _createRoom(int reqSeq, List<String> ids) throws TalkException, TException;
+  public abstract Room  createRoom(int reqSeq, List<String> ids) throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getRoom(java.lang.String)
    */
-  public abstract Room _getRoom(String roomId) throws TalkException, TException;
+  public abstract Room  getRoom(String roomId) throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_inviteIntoRoom(java.lang.String, java.util.List)
    */
-  public abstract void _inviteIntoRoom(String roomId, List<String> contactIds)
+  public abstract void  inviteIntoRoom(String roomId, List<String> contactIds)
       throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_leaveRoom(java.lang.String)
    */
-  public abstract void _leaveRoom(String id) throws TalkException, TException;
+  public abstract void  leaveRoom(String id) throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_createGroup(int, java.lang.String, java.util.List)
    */
-  public abstract Group _createGroup(int seq, String name, List<String> ids) throws TalkException,
+  public abstract Group  createGroup(int seq, String name, List<String> ids) throws TalkException,
       TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getGroups(java.util.List)
    */
-  public abstract List<Group> _getGroups(List<String> groupIds) throws TalkException, TException;
+  public abstract List<Group>  getGroups(List<String> groupIds) throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getGroupIdsJoined()
    */
-  public abstract List<String> _getGroupIdsJoined() throws TalkException, TException;
+  public abstract List<String>  getGroupIdsJoined() throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getGroupIdsInvited()
    */
-  public abstract List<String> _getGroupIdsInvited() throws TalkException, TException;
+  public abstract List<String>  getGroupIdsInvited() throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_acceptGroupInvitation(int, java.lang.String)
    */
-  public abstract void _acceptGroupInvitation(int seq, String groupId) throws TalkException,
+  public abstract void  acceptGroupInvitation(int seq, String groupId) throws TalkException,
       TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_cancelGroupInvitation(int, java.lang.String, java.util.List)
    */
-  public abstract void _cancelGroupInvitation(int seq, String groupId, List<String> contactIds)
+  public abstract void  cancelGroupInvitation(int seq, String groupId, List<String> contactIds)
       throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_inviteIntoGroup(int, java.lang.String, java.util.List)
    */
-  public abstract void _inviteIntoGroup(int seq, String groupId, List<String> contactIds)
+  public abstract void  inviteIntoGroup(int seq, String groupId, List<String> contactIds)
       throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_leaveGroup(java.lang.String)
    */
-  public abstract void _leaveGroup(String id) throws TalkException, TException;
+  public abstract void  leaveGroup(String id) throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getRecentMessages(java.lang.String, int)
    */
-  public abstract List<Message> _getRecentMessages(String id, int count) throws TalkException,
+  public abstract List<Message>  getRecentMessages(String id, int count) throws TalkException,
       TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_sendMessage(int, thrift.Message)
    */
-  public abstract Message _sendMessage(int seq, Message message) throws TalkException, TException;
+  public abstract Message  sendMessage(int seq, Message message) throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getLastOpRevision()
    */
-  public abstract long _getLastOpRevision() throws TalkException, TException;
+  public abstract long  getLastOpRevision() throws TalkException, TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_fetchOperations(long, int)
    */
-  public abstract List<Operation> _fetchOperations(long revision, int count) throws TalkException,
+  public abstract List<Operation>  fetchOperations(long revision, int count) throws TalkException,
       TException;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getMessageBoxCompactWrapUp(java.lang.String)
    */
-  public abstract TMessageBoxWrapUp _getMessageBoxCompactWrapUp(String id);
+  public abstract TMessageBoxWrapUp  getMessageBoxCompactWrapUp(String id);
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#_getMessageBoxCompactWrapUpList(int, int)
    */
-  public abstract TMessageBoxWrapUpResponse _getMessageBoxCompactWrapUpList(int start, int count)
+  public abstract TMessageBoxWrapUpResponse  getMessageBoxCompactWrapUpList(int start, int count)
       throws Exception;
 
 }

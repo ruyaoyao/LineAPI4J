@@ -7,9 +7,6 @@ You might wonder what do you need it, when you already have LINE client installe
 
 *LineAPI4J* allows you to build your own line bot, you're able to `send messages, stickers and images` with it.
 
-**Some codes related to login process has been removed due to security concerns of LINE corporation.
-Questions regards login process will not be answered.**
-
 Inspired by [LINE](https://github.com/carpedm20/line), LINE API written in Python by [carpedm20](https://github.com/carpedm20).
 
 # Using LINE API
@@ -39,8 +36,8 @@ Once you have LineContact, you can start from there.
 
 see example App.java in io.cslinmiso.line.LineAPI4J
 
+* *TODO fix some problems*
 * *TODO update usage of api*
-
 ScreenShot
 ========
 ![List of contacts.](http://cslinmiso.github.io/img/LineAPI4J/LineAPI4J.png)

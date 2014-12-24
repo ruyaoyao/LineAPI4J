@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 
 import line.thrift.Contact;
+import line.thrift.ContentType;
 import line.thrift.ErrorCode;
 import line.thrift.Group;
 import line.thrift.MIDType;
@@ -51,6 +52,7 @@ import line.thrift.TMessageBoxWrapUpResponse;
 import line.thrift.TalkException;
 
 import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
 
 import io.cslinmiso.line.api.LineApi;
 
@@ -76,7 +78,7 @@ public class LineClient {
     String auth = api.loginWithVerifier();
     setAuthToken(auth); 
     // initialize
-    this.setRevision(this.api._getLastOpRevision());
+    this.setRevision(this.api.getLastOpRevision());
     this.getProfile();
     this.refreshGroups();
     this.refreshContacts();
@@ -91,7 +93,7 @@ public class LineClient {
    * @throws Exception
    **/
   public Map<String, Contact> findAndAddContactsByUserid(String userid) throws Exception {
-    return checkAuth() != true ? null : this.api._findAndAddContactsByUserid(0, userid);
+    return checkAuth() != true ? null : this.api.findAndAddContactsByUserid(0, userid);
   }
 
   /**
@@ -101,7 +103,7 @@ public class LineClient {
    * @throws Exception
    **/
   public Map<String, Contact> findAndAddContactsByEmail(Set<String> emails) throws Exception {
-    return checkAuth() != true ? null : this.api._findAndAddContactsByEmail(0, emails);
+    return checkAuth() != true ? null : this.api.findAndAddContactsByEmail(0, emails);
   }
 
   /**
@@ -112,7 +114,7 @@ public class LineClient {
    * @throws Exception
    **/
   public Map<String, Contact> findAndAddContactsByPhone(Set<String> phone) throws Exception {
-    return checkAuth() != true ? null : this.api._findAndAddContactsByPhone(0, phone);
+    return checkAuth() != true ? null : this.api.findAndAddContactsByPhone(0, phone);
   }
 
   public Profile getProfile() throws Exception {
@@ -126,7 +128,7 @@ public class LineClient {
 
     /** Get `profile` of LINE account **/
     if (checkAuth()) {
-      this.profile = this.api._getProfile();
+      this.profile = this.api.getProfile();
 
       return profile;
     } else {
@@ -164,22 +166,25 @@ public class LineClient {
 
   public void refreshGroups() throws Exception {
     // Refresh groups of LineClient
+    // Refresh active chat rooms
     if (checkAuth()) {
-      List<String> contactIds = this.api._getAllContactIds();
-      List<Contact> contacts = this.api._getContacts(contactIds);
+      int start = 1;
+      int count = 50;
 
-      this.contacts = new ArrayList<LineContact>();
-
-      for (Contact contact : contacts) {
-        this.contacts.add(new LineContact(this, contact));
-      }
+      this.groups = new ArrayList<LineGroup>();
+      List<String> groupIdsJoined =  this.api.getGroupIdsJoined();
+      List<String> groupIdsInvited =  this.api.getGroupIdsInvited();
+      
+      addGroupsWithIds(groupIdsJoined);
+      addGroupsWithIds(groupIdsInvited);
+      
     }
   }
 
   public void addGroupsWithIds(List<String> groupIds) throws TalkException, TException, Exception {
     /** Refresh groups of LineClient */
     if (checkAuth()) {
-      List<Group> newGroups = this.api._getGroups(groupIds);
+      List<Group> newGroups = this.api.getGroups(groupIds);
 
       for (Group group : newGroups) {
         this.groups.add(new LineGroup(this, group));
@@ -191,8 +196,8 @@ public class LineClient {
   public void refreshContacts() throws TalkException, TException, Exception {
     /** Refresh contacts of LineClient **/
     if (checkAuth()) {
-      List<String> contactIds = this.api._getAllContactIds();
-      List<Contact> contacts = this.api._getContacts(contactIds);
+      List<String> contactIds = this.api.getAllContactIds();
+      List<Contact> contacts = this.api.getContacts(contactIds);
 
       this.contacts = new ArrayList<LineContact>();
 
@@ -206,8 +211,8 @@ public class LineClient {
   public List<LineContact> getHiddenContacts() throws Exception {
     // Refresh groups of LineClient
     if (checkAuth()) {
-      List<String> contactIds = this.api._getBlockedContactIds();
-      List<Contact> contacts = this.api._getContacts(contactIds);
+      List<String> contactIds = this.api.getBlockedContactIds();
+      List<Contact> contacts = this.api.getContacts(contactIds);
 
       List<LineContact> c = new ArrayList<LineContact>();
 
@@ -228,10 +233,10 @@ public class LineClient {
       this.rooms = new ArrayList<LineRoom>();
 
       while (true) {
-        TMessageBoxWrapUpResponse channel = this.api._getMessageBoxCompactWrapUpList(start, count);
+        TMessageBoxWrapUpResponse channel = this.api.getMessageBoxCompactWrapUpList(start, count);
         for (TMessageBoxWrapUp box : channel.messageBoxWrapUpList) {
           if (box.messageBox.midType == MIDType.ROOM) {
-            LineRoom room = new LineRoom(this, this.api._getRoom(box.messageBox.id));
+            LineRoom room = new LineRoom(this, this.api.getRoom(box.messageBox.id));
             this.rooms.add(room);
           }
         }
@@ -254,7 +259,7 @@ public class LineClient {
      **/
     if (checkAuth()) {
 
-      LineGroup group = new LineGroup(this, this.api._createGroup(0, name, ids));
+      LineGroup group = new LineGroup(this, this.api.createGroup(0, name, ids));
       this.groups.add(group);
       return group;
     }
@@ -271,13 +276,13 @@ public class LineClient {
      */
     if (checkAuth()) {
 
-      List<String> contactIds = this.api._getAllContactIds();
+      List<String> contactIds = new ArrayList<String>();
 
       for (LineContact contact : contacts) {
         contactIds.add(contact.getId());
       }
 
-      LineGroup group = new LineGroup(this, this.api._createGroup(0, name, contactIds));
+      LineGroup group = new LineGroup(this, this.api.createGroup(0, name, contactIds));
       this.groups.add(group);
 
       return group;
@@ -326,12 +331,12 @@ public class LineClient {
      * :param group: LineGroup instance :param contacts: LineContact instances to invite
      */
     if (checkAuth()) {
-      List<String> contactIds = this.api._getAllContactIds();
+      List<String> contactIds = this.api.getAllContactIds();
 
       for (LineContact contact : contacts) {
         contactIds.add(contact.getId());
       }
-      this.api._inviteIntoGroup(0, group.getId(), contactIds);
+      this.api.inviteIntoGroup(0, group.getId(), contactIds);
     }
   }
 
@@ -343,7 +348,7 @@ public class LineClient {
      **/
     if (checkAuth()) {
 
-      this.api._acceptGroupInvitation(0, group.getId());
+      this.api.acceptGroupInvitation(0, group.getId());
       return true;
     }
     return false;
@@ -356,7 +361,7 @@ public class LineClient {
      * :param group: LineGroup instance to leave
      */
     if (checkAuth()) {
-      this.api._leaveGroup(group.getId());
+      this.api.leaveGroup(group.getId());
       return this.groups.remove(group);
     }
     return false;
@@ -367,7 +372,7 @@ public class LineClient {
     /** Create a chat room with contact ids **/
     if (checkAuth()) {
 
-      LineRoom room = new LineRoom(this, this.api._createRoom(0, ids));
+      LineRoom room = new LineRoom(this, this.api.createRoom(ids.size(), ids));
       this.rooms.add(room);
 
       return room;
@@ -386,7 +391,7 @@ public class LineClient {
         contactIds.add(contact.getId());
       }
 
-      LineRoom room = new LineRoom(this, this.api._createRoom(0, contactIds));
+      LineRoom room = new LineRoom(this, this.api.createRoom(contactIds.size(), contactIds));
       this.rooms.add(room);
 
       return room;
@@ -425,7 +430,7 @@ public class LineClient {
         contactIds.add(contact.getId());
       }
 
-      this.api._inviteIntoRoom(room.getId(), contactIds);
+      this.api.inviteIntoRoom(room.getId(), contactIds);
     }
   }
 
@@ -437,7 +442,7 @@ public class LineClient {
      **/
     if (checkAuth()) {
 
-      this.api._leaveRoom(room.getId());
+      this.api.leaveRoom(room.getId());
       this.rooms.remove(room);
 
       return true;
@@ -455,7 +460,7 @@ public class LineClient {
      */
     if (checkAuth()) {
       // seq = 0;
-      return this.api._sendMessage(seq, message);
+      return this.api.sendMessage(seq, message);
     }
     return null;
 
@@ -469,7 +474,7 @@ public class LineClient {
      */
     if (checkAuth()) {
 
-      TMessageBoxWrapUp messageBoxWrapUp = this.api._getMessageBoxCompactWrapUp(id);
+      TMessageBoxWrapUp messageBoxWrapUp = this.api.getMessageBoxCompactWrapUp(id);
 
       return messageBoxWrapUp.getMessageBox();
     }
@@ -486,7 +491,7 @@ public class LineClient {
      */
     if (checkAuth()) {
       String id = messageBox.getId();
-      List<Message> messages = this.api._getRecentMessages(id, count);
+      List<Message> messages = this.api.getRecentMessages(id, count);
 
       return this.getLineMessageFromMessage(messages);
     }
@@ -509,26 +514,45 @@ public class LineClient {
       List<Operation> operations = new ArrayList<Operation>();
 
       try {
-        operations = this.api._fetchOperations(this.revision, count);
+        operations = this.api.fetchOperations(this.getRevision(), count);
       } catch (TalkException e) {
         if (ErrorCode.INVALID_MID == e.getCode()) {
           throw new Exception("user logged in to another machien");
         } else {
           return;
         }
+      }catch (TTransportException e) {
+        if (e.getMessage().indexOf("204") != -1) {
+          return;
+        } else {
+          return;
+        }
       }
 
       for (Operation operation : operations) {
-        if (operation.getType() == OpType.END_OF_OPERATION) {
+        OpType opType = operation.getType();
+        Message msg = operation.getMessage();
+        if (opType == OpType.END_OF_OPERATION) {
 
-        } else if (operation.getType() == OpType.SEND_MESSAGE) {
+        } else if (opType == OpType.SEND_MESSAGE) {
 
-        } else if (operation.getType() == OpType.RECEIVE_MESSAGE) {
-          LineMessage message = new LineMessage(this, operation.getMessage());
-
+        } else if (opType == OpType.RECEIVE_MESSAGE) {
+          LineMessage message = new LineMessage(this, msg);
+          if(msg.getContentType() == ContentType.VIDEO || msg.getContentType() == ContentType.IMAGE){
+            continue;
+          }
+          
+          String id = null;
+          String raw_mid = getProfile().getMid();
           String raw_sender = operation.getMessage().getFrom();
           String raw_receiver = operation.getMessage().getTo();
 
+          // id = 實際發送者
+          id = raw_receiver;
+          if(raw_receiver.equals(raw_mid)){
+            id=raw_sender;
+          }
+          
           LineBase sender = this.getContactOrRoomOrGroupById(raw_sender);
           LineBase receiver = this.getContactOrRoomOrGroupById(raw_receiver);
 
@@ -540,6 +564,7 @@ public class LineClient {
             sender = this.getContactOrRoomOrGroupById(raw_sender);
             receiver = this.getContactOrRoomOrGroupById(raw_receiver);
 
+            System.out.printf("[*] sender: %s  receiver: %s\n", sender,receiver);
             // yield (sender, receiver, message);
           } else {
             System.out.printf("[*] %s\n", OpType.findByValue(operation.getType().getValue()));
