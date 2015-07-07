@@ -45,13 +45,21 @@ public class App
 {
     public static void main( String[] args )
     {
-      LineApi api = new LineApiImpl();
       try {
-        LoginResult result = api.login("xxxx@xxx.com", "xxxxxxx"); // login
-        LineClient client = new LineClient(api); //init client
-        LineContact someoneContact = client.getContactByName("Someone"); // find contact
+        String id = "xxx@xxxx.com";
+        String password = "xx";
+        String certificate = "";
+        
+        // There are two ways to log in, by id and password.
+        // if you have acquired certificate token, you could use it to login too. 
+        // it will skip the pincode check.
+        
+        // init client
+        LineClient client = new LineClient(id, password);
+        LineContact someoneContact = client.getContactByName("someone"); // find contact
         System.out.println(someoneContact.sendSticker("13", "1", "100", ""));
         System.out.println(someoneContact.sendMessage(":) test"));
+
       } catch (java.net.SocketTimeoutException e) {
         // setAwaitforVerify false
       } catch (Exception e) {

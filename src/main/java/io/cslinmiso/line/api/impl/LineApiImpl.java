@@ -86,7 +86,7 @@ public class LineApiImpl implements LineApi {
   public long revision = 0;
 
   /** The _headers. */
-  public Map<String, String>  headers = new HashMap<String, String>();
+  private Map<String, String>  _headers = new HashMap<String, String>();
 
   /** The _client. */
   public TalkService.Client _client = null;
@@ -152,17 +152,20 @@ public class LineApiImpl implements LineApi {
 
     return new TalkService.Client(protocol);
   }
-
-
+  
   @Override
   public LoginResult login(String id, String password) throws Exception {
+    return login(id, password, null);
+  }
+
+  @Override
+  public LoginResult login(String id, String password, String certificate) throws Exception {
 
     IdentityProvider provider = null;
     // Map<String, String> json = null;
     // String sessionKey = null;
     boolean keepLoggedIn = false;
     String accessLocation = this.ip;
-    String certificate = "";
 
     // Login to LINE server.
     if (id.matches(EMAIL_REGEX)) {
@@ -196,14 +199,18 @@ public class LineApiImpl implements LineApi {
             keepLoggedIn, accessLocation, this.systemName, certificate);
 
     _headers.put("X-Line-Access", result.getVerifier());
-
     String pinCode = result.getPinCode();
 
-    System.out.printf("Enter PinCode '%s' to your mobile phone in 2 minutes.\n", pinCode);
-
+    if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM && pinCode != null) {
+      System.out.printf("Enter PinCode '%s' to your mobile phone in 2 minutes.\n", pinCode);
+      // await for pinCode to be certified, it will return a verifier afterward.
+      loginWithVerifier();
+    }else if (result.getType() == LoginResultType.SUCCESS) {
+      // if param certificate has passed certification 
+      _headers.put("X-Line-Access", result.getAuthToken());
+    }
     return result;
-    // await for pinCode to be certified, it will return a verifier afterward.
-    // loginWithVerifier();
+    
   }
 
   /* (non-Javadoc)
@@ -258,11 +265,14 @@ public class LineApiImpl implements LineApi {
   public String loginWithVerifier() throws Exception {
     Map json = null;
     json = getCertResult(LINE_CERTIFICATE_URL);
-
+    if(json == null){
+      throw new Exception("fail to pass certificate check.");
+    }
+    
     // login with verifier
     json = (Map) json.get("result");
     String verifier = (String) json.get("verifier");
-
+    
     LoginResult result = this._client.loginWithVerifierForCertificate(verifier);
 
     if (result.getType() == LoginResultType.SUCCESS) {
@@ -455,12 +465,12 @@ public class LineApiImpl implements LineApi {
     return this._client.getLastOpRevision();
   }
 
-  public List<Operation>  fetchOperations(long revision, int count) throws TalkException,
+  public List<Operation> fetchOperations(long revision, int count) throws TalkException,
       TException {
     return this._client.fetchOperations(revision, count);
   }
 
-  public TMessageBoxWrapUp  getMessageBoxCompactWrapUp(String id) {
+  public TMessageBoxWrapUp getMessageBoxCompactWrapUp(String id) {
     try {
       return this._client.getMessageBoxCompactWrapUp(id);
     } catch (Exception e) {
@@ -468,7 +478,7 @@ public class LineApiImpl implements LineApi {
     }
   }
 
-  public TMessageBoxWrapUpResponse  getMessageBoxCompactWrapUpList(int start, int count)
+  public TMessageBoxWrapUpResponse getMessageBoxCompactWrapUpList(int start, int count)
       throws Exception {
     try {
       return this._client.getMessageBoxCompactWrapUpList(start, count);
@@ -485,4 +495,8 @@ public class LineApiImpl implements LineApi {
     this._client = _client;
   }
 
+  public String getLineAccessToken() {
+    return _headers.get("X-Line-Access");
+  }
+  
 }

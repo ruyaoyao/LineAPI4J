@@ -90,6 +90,8 @@ public interface LineApi {
   public abstract Client ready() throws TTransportException;
 
   public abstract LoginResult login(String id, String password) throws Exception;
+  
+  public abstract LoginResult login(String id, String password, String certificate) throws Exception;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#loginWithAuthToken(java.lang.String)
@@ -251,5 +253,7 @@ public interface LineApi {
    */
   public abstract TMessageBoxWrapUpResponse  getMessageBoxCompactWrapUpList(int start, int count)
       throws Exception;
+
+  public abstract String getLineAccessToken();
 
 }

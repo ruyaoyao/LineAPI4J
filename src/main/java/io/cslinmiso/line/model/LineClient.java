@@ -41,6 +41,7 @@ import line.thrift.Contact;
 import line.thrift.ContentType;
 import line.thrift.ErrorCode;
 import line.thrift.Group;
+import line.thrift.LoginResult;
 import line.thrift.MIDType;
 import line.thrift.Message;
 import line.thrift.OpType;
@@ -55,6 +56,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
 import io.cslinmiso.line.api.LineApi;
+import io.cslinmiso.line.api.impl.LineApiImpl;
 
 public class LineClient {
 
@@ -72,11 +74,30 @@ public class LineClient {
     throw new Exception("Please initialize LineClient with LineAPI.");
   }
 
+  public LineClient(String id, String password) throws Exception {
+    LineApi api = new LineApiImpl();
+    LoginResult result = api.login(id, password); // login
+    this.api = api;
+    init();
+  }
+  
+  public LineClient(String id, String password, String certificate) throws Exception {
+    LineApi api = new LineApiImpl();
+    LoginResult result = api.login(id, password, certificate); // login
+    this.api = api;
+    init();
+  }
+
   public LineClient(LineApi api) throws Exception {
     this.api = api;
+    init();
+  }
+
+  private void init() throws Exception {
     // 認證通過後登入
-    String auth = api.loginWithVerifier();
-    setAuthToken(auth); 
+    // String auth = api.loginWithVerifier();
+    // Set up authToken
+    setAuthToken(api.getLineAccessToken());
     // initialize
     this.setRevision(this.api.getLastOpRevision());
     this.getProfile();
@@ -84,7 +105,6 @@ public class LineClient {
     this.refreshContacts();
     this.refreshActiveRooms();
   }
-
 
   /**
    * 用LINE ID搜尋並加入好友
@@ -172,12 +192,12 @@ public class LineClient {
       int count = 50;
 
       this.groups = new ArrayList<LineGroup>();
-      List<String> groupIdsJoined =  this.api.getGroupIdsJoined();
-      List<String> groupIdsInvited =  this.api.getGroupIdsInvited();
-      
+      List<String> groupIdsJoined = this.api.getGroupIdsJoined();
+      List<String> groupIdsInvited = this.api.getGroupIdsInvited();
+
       addGroupsWithIds(groupIdsJoined);
       addGroupsWithIds(groupIdsInvited);
-      
+
     }
   }
 
@@ -517,11 +537,11 @@ public class LineClient {
         operations = this.api.fetchOperations(this.getRevision(), count);
       } catch (TalkException e) {
         if (ErrorCode.INVALID_MID == e.getCode()) {
-          throw new Exception("user logged in to another machien");
+          throw new Exception("user logged in to another machine");
         } else {
           return;
         }
-      }catch (TTransportException e) {
+      } catch (TTransportException e) {
         if (e.getMessage().indexOf("204") != -1) {
           return;
         } else {
@@ -538,10 +558,11 @@ public class LineClient {
 
         } else if (opType == OpType.RECEIVE_MESSAGE) {
           LineMessage message = new LineMessage(this, msg);
-          if(msg.getContentType() == ContentType.VIDEO || msg.getContentType() == ContentType.IMAGE){
+          if (msg.getContentType() == ContentType.VIDEO
+              || msg.getContentType() == ContentType.IMAGE) {
             continue;
           }
-          
+
           String id = null;
           String raw_mid = getProfile().getMid();
           String raw_sender = operation.getMessage().getFrom();
@@ -549,10 +570,10 @@ public class LineClient {
 
           // id = 實際發送者
           id = raw_receiver;
-          if(raw_receiver.equals(raw_mid)){
-            id=raw_sender;
+          if (raw_receiver.equals(raw_mid)) {
+            id = raw_sender;
           }
-          
+
           LineBase sender = this.getContactOrRoomOrGroupById(raw_sender);
           LineBase receiver = this.getContactOrRoomOrGroupById(raw_receiver);
 
@@ -564,7 +585,7 @@ public class LineClient {
             sender = this.getContactOrRoomOrGroupById(raw_sender);
             receiver = this.getContactOrRoomOrGroupById(raw_receiver);
 
-            System.out.printf("[*] sender: %s  receiver: %s\n", sender,receiver);
+            System.out.printf("[*] sender: %s  receiver: %s\n", sender, receiver);
             // yield (sender, receiver, message);
           } else {
             System.out.printf("[*] %s\n", OpType.findByValue(operation.getType().getValue()));
