@@ -7,7 +7,7 @@
  * <pre>
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 Trey Lin
+ * Copyright (c) 2015 Trey Lin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -65,11 +65,21 @@ public interface LineApi {
   /** The Constant LINE_HTTP_URL. */
   public static final String LINE_HTTP_URL = LINE_DOMAIN + "/api/v4/TalkService.do";
   
-  /** The Constant LINE_HTTP_IN_URL. */
+  /** The Constant LINE_HTTP_IN_URL.
+   * 
+   * AKA LINE_POLL_PATH in purple-line
+   * http://altrepo.eu/git/purple-line/commit/0ac35486e9f2ca6266c461b59536a29fe440a565.diff
+   * */
   public static final String LINE_HTTP_IN_URL = LINE_DOMAIN + "/P4";
+  
+  /** The Constant LINE_COMMAND_URL. */
+  public static final String LINE_COMMAND_URL = LINE_DOMAIN + "S4";
   
   /** The Constant LINE_CERTIFICATE_URL. */
   public static final String LINE_CERTIFICATE_URL = LINE_DOMAIN + "/Q";
+  
+  /** The Constant LINE_SHOP_URL. */
+  public static final String LINE_SHOP_URL = LINE_DOMAIN + "/SHOP4";
   
   /** The Constant LINE_SESSION_LINE_URL. */
   public static final String LINE_SESSION_LINE_URL = LINE_DOMAIN + "/authct/v1/keys/line";
@@ -83,7 +93,7 @@ public interface LineApi {
   
   /** The Constant DATE_PATTERN. */
   public static final String DATE_PATTERN = "yyyyMMdd";
-
+  
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#ready()
    */
@@ -106,7 +116,7 @@ public interface LineApi {
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#loginWithVerifier()
    */
-  public abstract String loginWithVerifier() throws Exception;
+  public abstract String loginWithVerifierForCertificate() throws Exception;
 
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#getCertResult(java.lang.String)
@@ -255,5 +265,8 @@ public interface LineApi {
       throws Exception;
 
   public abstract String getLineAccessToken();
+
+  public abstract String getCertificate();
+
 
 }

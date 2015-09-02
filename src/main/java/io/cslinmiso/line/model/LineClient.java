@@ -1,14 +1,14 @@
 /**
  * 
- * @Package: io.cslinmiso.line.model
+ * @Package:  io.cslinmiso.line.model
  * @FileName: LineClient.java
- * @author: treylin
- * @date: 2014/11/24, 下午 03:14:20
+ * @author:   trey
+ * @date:     2015/9/2, 下午 02:43:57
  * 
  * <pre>
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 Trey Lin
+ * Copyright (c) 2015 Trey Lin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +62,7 @@ public class LineClient {
 
   LineApi api;
   String _authToken;
+  String certificate;
   /** The revision. */
   public long revision = 0;
 
@@ -98,6 +99,7 @@ public class LineClient {
     // String auth = api.loginWithVerifier();
     // Set up authToken
     setAuthToken(api.getLineAccessToken());
+    setCertificate(api.getCertificate());
     // initialize
     this.setRevision(this.api.getLastOpRevision());
     this.getProfile();
@@ -107,11 +109,12 @@ public class LineClient {
   }
 
   /**
-   * 用LINE ID搜尋並加入好友
+   * 用LINE ID搜尋並加入好友.
    * 
-   * @return
-   * @throws Exception
-   **/
+   * @param userid the userid
+   * @return the map
+   * @throws Exception the exception
+   */
   public Map<String, Contact> findAndAddContactsByUserid(String userid) throws Exception {
     return checkAuth() != true ? null : this.api.findAndAddContactsByUserid(0, userid);
   }
@@ -518,9 +521,14 @@ public class LineClient {
     return null;
   }
 
+  public void longPoll() throws TalkException, TException, Exception{
+    // default count as 50
+    longPoll(50);
+  }
+  
   public void longPoll(int count) throws TalkException, TException, Exception {
     /**
-     * Receive a list of operations that have to be processed by original Line cleint.
+     * Receive a list of operations that have to be processed by original Line client.
      * 
      * :param count: number of operations to get from :returns: a generator which returns operations
      * 
@@ -547,6 +555,8 @@ public class LineClient {
         } else {
           return;
         }
+      }catch (Exception e) {
+        System.out.println(e);
       }
 
       for (Operation operation : operations) {
@@ -568,7 +578,7 @@ public class LineClient {
           String raw_sender = operation.getMessage().getFrom();
           String raw_receiver = operation.getMessage().getTo();
 
-          // id = 實際發送者
+          // id = 實際發送者, whom sent the message
           id = raw_receiver;
           if (raw_receiver.equals(raw_mid)) {
             id = raw_sender;
@@ -588,7 +598,7 @@ public class LineClient {
             System.out.printf("[*] sender: %s  receiver: %s\n", sender, receiver);
             // yield (sender, receiver, message);
           } else {
-            System.out.printf("[*] %s\n", OpType.findByValue(operation.getType().getValue()));
+            System.out.printf("Sender:%s \t Receiver:%s\n [*] %s\n", sender, receiver, OpType.findByValue(operation.getType().getValue()));
 
           }
 
@@ -686,6 +696,14 @@ public class LineClient {
 
   public void setProfile(Profile profile) {
     this.profile = profile;
+  }
+
+  public String getCertificate() {
+    return certificate;
+  }
+
+  public void setCertificate(String certificate) {
+    this.certificate = certificate;
   }
 
 

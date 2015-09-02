@@ -10,7 +10,7 @@ package io.cslinmiso.line.api.impl;
  * <pre>
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 Trey Lin
+ * Copyright (c) 2015 Trey Lin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -71,19 +71,21 @@ import com.mashape.unirest.http.Unirest;
 
 public class LineApiImpl implements LineApi {
 
-  public static final String EMAIL_REGEX = "[^@]+@[^@]+\\.[^@]+";
+  private static final String EMAIL_REGEX = "[^@]+@[^@]+\\.[^@]+";
 
   /** The ip. */
-  public String ip = "192.168.11.123";
+  private String ip = "192.168.11.123";
 
   /** The version. */
-  public String version = "3.7.3.82";
+  private String version = "3.7.3.82";
 
   /** The com_name. */
-  public String systemName = "LineJ";
+  private String systemName = "Line4J";
 
+  private String certificate;
+  
   /** The revision. */
-  public long revision = 0;
+  private long revision = 0;
 
   /** The _headers. */
   private Map<String, String>  _headers = new HashMap<String, String>();
@@ -144,7 +146,7 @@ public class LineApiImpl implements LineApi {
    */
   public Client ready() throws TTransportException {
 
-    THttpClient transport = new THttpClient(LINE_HTTP_URL);
+    THttpClient transport = new THttpClient(LINE_HTTP_IN_URL);
     transport.setCustomHeaders(_headers);
     transport.open();
 
@@ -176,6 +178,9 @@ public class LineApiImpl implements LineApi {
       // json = getCertResult(LINE_SESSION_NAVER_URL);
     }
 
+    if(certificate != null){
+      setCertificate(certificate);
+    }
     // sessionKey = json.
     // session_key = j['session_key']
     // message = (chr(len(session_key)) + session_key +
@@ -204,11 +209,14 @@ public class LineApiImpl implements LineApi {
     if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM && pinCode != null) {
       System.out.printf("Enter PinCode '%s' to your mobile phone in 2 minutes.\n", pinCode);
       // await for pinCode to be certified, it will return a verifier afterward.
-      loginWithVerifier();
+      loginWithVerifierForCertificate();
     }else if (result.getType() == LoginResultType.SUCCESS) {
       // if param certificate has passed certification 
       _headers.put("X-Line-Access", result.getAuthToken());
     }
+    
+    // Once the client passed the verification, switch connection to HTTP_IN_URL
+    this._client = ready();
     return result;
     
   }
@@ -262,7 +270,7 @@ public class LineApiImpl implements LineApi {
    * @see api.line.LineApi#loginWithVerifier()
    */
   @Override
-  public String loginWithVerifier() throws Exception {
+  public String loginWithVerifierForCertificate() throws Exception {
     Map json = null;
     json = getCertResult(LINE_CERTIFICATE_URL);
     if(json == null){
@@ -278,7 +286,8 @@ public class LineApiImpl implements LineApi {
     if (result.getType() == LoginResultType.SUCCESS) {
       // this.certificate = msg.certificate
       _headers.put("X-Line-Access", result.getAuthToken());
-      return result.getAuthToken();
+      setCertificate(result.getCertificate());
+      return result.getCertificate();
     } else if (result.getType() == LoginResultType.REQUIRE_QRCODE) {
       throw new Exception("require QR code");
     } else {
@@ -499,4 +508,12 @@ public class LineApiImpl implements LineApi {
     return _headers.get("X-Line-Access");
   }
   
+  public String getCertificate() {
+    return certificate;
+  }
+
+  public void setCertificate(String certificate) {
+    this.certificate = certificate;
+  }
+
 }
