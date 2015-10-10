@@ -162,35 +162,48 @@ public class LineApiImpl implements LineApi {
 
   @Override
   public LoginResult login(String id, String password, String certificate) throws Exception {
-
-    IdentityProvider provider = null;
-    // Map<String, String> json = null;
-    // String sessionKey = null;
+  IdentityProvider provider = null;
+    Map<String, String> json = null;
+    String sessionKey = null;
     boolean keepLoggedIn = false;
     String accessLocation = this.ip;
 
     // Login to LINE server.
     if (id.matches(EMAIL_REGEX)) {
       provider = IdentityProvider.LINE; // LINE
-      // json = getCertResult(LINE_SESSION_LINE_URL);
+      json = getCertResult(LINE_SESSION_LINE_URL);
     } else {
       provider = IdentityProvider.NAVER_KR; // NAVER
-      // json = getCertResult(LINE_SESSION_NAVER_URL);
+      json = getCertResult(LINE_SESSION_NAVER_URL);
     }
 
-    if(certificate != null){
+    if (certificate != null) {
       setCertificate(certificate);
     }
-    // sessionKey = json.
-    // session_key = j['session_key']
-    // message = (chr(len(session_key)) + session_key +
-    // chr(len(this.id)) + this.id +
-    // chr(len(this.password)) + this.password).encode('utf-8')
-    //
-    // keyname, n, e = j['rsa_key'].split(",")
-    // pub_key = rsa.PublicKey(int(n,16), int(e,16))
-    // crypto = rsa.encrypt(message, pub_key).encode('hex')
 
+    sessionKey = json.get("session_key");
+    String tmpMsg = (char) (sessionKey.length()) + sessionKey + (char) (id.length()) + id
+        + (char) (password.length()) + password;
+    String message = new String(tmpMsg.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
+    String[] keyArr = json.get("rsa_key").split(",");
+    String keyName = keyArr[0];
+    String n = keyArr[1];
+    String e = keyArr[2];
+
+    BigInteger modulus = new BigInteger(n, 16);
+    BigInteger pubExp = new BigInteger(e, 16);
+
+    KeyFactory keyFactory = KeyFactory.getInstance("RSA");
+    RSAPublicKeySpec pubKeySpec = new RSAPublicKeySpec(modulus, pubExp);
+    RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(pubKeySpec);
+    // not sure if it's correct instance...
+    Cipher cipher = Cipher.getInstance("RSA/ECB/NoPadding");
+    cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+    byte[] enBytes = cipher.doFinal(message.getBytes());
+    String encryptString = Hex.encodeHexString(enBytes);
+    certificate = encryptString;
+    // couldn't pass auth.
+    
     THttpClient transport = new THttpClient(LINE_HTTP_URL);
     transport.setCustomHeaders(_headers);
     transport.open();
@@ -221,6 +234,44 @@ public class LineApiImpl implements LineApi {
     
   }
 
+  // login with verifier that is un-certified
+  public LoginResult loginWithVerifier(String verifier) throws Exception { 
+    
+    Map json = null;
+    _headers.put("X-Line-Access", verifier);
+    
+    json = getCertResult(LINE_CERTIFICATE_URL);
+    if(json == null){
+      throw new Exception("fail to pass certificate check.");
+    }
+    
+    // login with verifier
+    json = (Map) json.get("result");
+    verifier = (String) json.get("verifier");
+    
+    
+    THttpClient transport = new THttpClient(LINE_HTTP_URL);
+    transport.setCustomHeaders(_headers);
+    transport.open();
+
+    TProtocol protocol = new TCompactProtocol(transport);
+
+    this._client = new TalkService.Client(protocol);
+    
+    LoginResult result = this._client.loginWithVerifierForCertificate(verifier);
+
+    if (result.getType() == LoginResultType.SUCCESS) {
+      // this.certificate = msg.certificate
+      _headers.put("X-Line-Access", result.getAuthToken());
+      setCertificate(result.getCertificate());
+      return result;
+    } else if (result.getType() == LoginResultType.REQUIRE_QRCODE) {
+      throw new Exception("require QR code");
+    } else {
+      throw new Exception("require device confirm");
+    }
+  }
+  
   /* (non-Javadoc)
    * @see api.line.LineApi#loginWithAuthToken(java.lang.String)
    */

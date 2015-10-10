@@ -102,7 +102,9 @@ public interface LineApi {
   public abstract LoginResult login(String id, String password) throws Exception;
   
   public abstract LoginResult login(String id, String password, String certificate) throws Exception;
-
+  
+  public abstract LoginResult loginWithVerifier(String verifier) throws Exception;
+  
   /* (non-Javadoc)
    * @see io.cslinmiso.line.api.LineApi#loginWithAuthToken(java.lang.String)
    */
