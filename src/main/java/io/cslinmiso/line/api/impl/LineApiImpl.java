@@ -36,10 +36,18 @@ package io.cslinmiso.line.api.impl;
 import io.cslinmiso.line.api.LineApi;
 import io.cslinmiso.line.utils.Utility;
 
+import java.math.BigInteger;
+
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.RSAPublicKeySpec;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import javax.crypto.Cipher;
 
 import line.thrift.AuthQrcode;
 import line.thrift.Contact;
@@ -58,6 +66,7 @@ import line.thrift.TalkService;
 import line.thrift.TalkService.Client;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.codec.binary.Hex;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -196,13 +205,10 @@ public class LineApiImpl implements LineApi {
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
     RSAPublicKeySpec pubKeySpec = new RSAPublicKeySpec(modulus, pubExp);
     RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(pubKeySpec);
-    // not sure if it's correct instance...
-    Cipher cipher = Cipher.getInstance("RSA/ECB/NoPadding");
+    Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     cipher.init(Cipher.ENCRYPT_MODE, publicKey);
     byte[] enBytes = cipher.doFinal(message.getBytes());
     String encryptString = Hex.encodeHexString(enBytes);
-    certificate = encryptString;
-    // couldn't pass auth.
     
     THttpClient transport = new THttpClient(LINE_HTTP_URL);
     transport.setCustomHeaders(_headers);
@@ -213,7 +219,7 @@ public class LineApiImpl implements LineApi {
     this._client = new TalkService.Client(protocol);
 
     LoginResult result =
-        this._client.loginWithIdentityCredentialForCertificate(provider, id, password,
+        this._client.loginWithIdentityCredentialForCertificate(provider, keyName, encryptString,
             keepLoggedIn, accessLocation, this.systemName, certificate);
 
     _headers.put("X-Line-Access", result.getVerifier());
