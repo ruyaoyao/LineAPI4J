@@ -1,6 +1,6 @@
 LineAPI4J
 =========
-` Be awared, currently there's a problem regarding log in process. I am still working on it. Thanks.`
+` Login problem fixed.`
 
 *LineAPI4J* is a library written in Java with compressed thrift client.
 
