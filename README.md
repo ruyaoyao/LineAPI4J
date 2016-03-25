@@ -10,7 +10,11 @@ You might wonder what do you need it, when you already have LINE client installe
 
 Inspired by [LINE](https://github.com/carpedm20/line), LINE API written in Python by [carpedm20](https://github.com/carpedm20).
 
-# Using LINE API
+#### How to build
+
+    mvn package
+
+### Using LINE API
 
 Basic process as following code.
 
@@ -32,10 +36,34 @@ $ git clone git://github.com/cslinmiso/LineAPI4J.git
         e.printStackTrace();
       }
 ```
-
 Once you have LineContact, you can start from there.
 
 see example App.java in io.cslinmiso.line.LineAPI4J
+
+### Methods
+
+
+**LineContact.sendImage()**
+
+Parameter: URL String, File, InputStream
+
+        // Sending image by local image path
+        someoneContact.sendImage("/Users/treylin/Downloads/yajpg");
+        
+        // Sending image by file
+        File file = new File("/Users/treylin/Downloads/yan.jpg");
+        someoneContact.sendImage(file);
+        
+        // Sending image by inputstream
+        InputStream is = new FileInputStream(file);
+        someoneContact.sendImage(is);
+
+**LineContact.sendImageWithUrl()**
+
+Parameter: URL String
+
+        someoneContact.sendImageWithURL("https://goo.gl/qXdQrf");
+
 
 * *TODO fix some problems*
 * *TODO update usage of api*
@@ -50,7 +78,7 @@ This project is under [MIT license](http://www.opensource.org/licenses/mit-licen
 
 The MIT License (MIT)
 
-Copyright (c) 2014 Trey Lin
+Copyright (c) 2014-2016 Trey Lin
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
