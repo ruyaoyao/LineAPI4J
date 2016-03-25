@@ -31,11 +31,12 @@
  */
 package io.cslinmiso.LineAPI4J;
 
-import io.cslinmiso.line.api.LineApi;
-import io.cslinmiso.line.api.impl.LineApiImpl;
 import io.cslinmiso.line.model.LineClient;
 import io.cslinmiso.line.model.LineContact;
-import line.thrift.LoginResult;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 /**
  * LineAPI4J
@@ -46,20 +47,36 @@ public class App
     public static void main( String[] args )
     {
       try {
-        String id = "xxx@xxxx.com";
-        String password = "xx";
+        String id = "xxx@xx.com";
+        String password = "";
         String certificate = "";
         
         // There are two ways to log in, by id and password.
+		// --Certificate token is still not avaliable for log in.--
         // if you have acquired certificate token, you could use it to login too. 
         // it will skip the pincode check.
-        
-        // init client
-        LineClient client = new LineClient(id, password);
-        LineContact someoneContact = client.getContactByName("someone"); // find contact
-        System.out.println(someoneContact.sendSticker("13", "1", "100", ""));
-        System.out.println(someoneContact.sendMessage(":) test"));
 
+        // init client
+        LineClient client = new LineClient(id, password, certificate);
+        LineContact someoneContact = client.getContactByName("someone"); // find contact
+
+        // Sending image by local image path
+        someoneContact.sendImage("/Users/treylin/Downloads/yan.jpg");
+        // Sending image by file
+        File file = new File("/Users/treylin/Downloads/yan.jpg");
+        someoneContact.sendImage(file);
+        // Sending image by inputstream
+        InputStream is = new FileInputStream(file);
+        someoneContact.sendImage(is);
+        
+        someoneContact.sendImageWithURL("https://goo.gl/qXdQrf");
+		// send the sticker
+        someoneContact.sendSticker("13", "1", "100", "");
+		// send the message
+        System.out.println(someoneContact.sendMessage(":) test"));
+        while(true){
+          client.longPoll();
+        }
       } catch (java.net.SocketTimeoutException e) {
         // setAwaitforVerify false
       } catch (Exception e) {

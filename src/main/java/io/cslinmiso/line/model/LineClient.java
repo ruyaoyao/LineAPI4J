@@ -1,9 +1,9 @@
 /**
  * 
- * @Package:  io.cslinmiso.line.model
+ * @Package: io.cslinmiso.line.model
  * @FileName: LineClient.java
- * @author:   trey
- * @date:     2015/9/2, 下午 02:43:57
+ * @author: trey
+ * @date: 2015/9/2, 下午 02:43:57
  * 
  * <pre>
  * The MIT License (MIT)
@@ -32,6 +32,7 @@
 package io.cslinmiso.line.model;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -71,8 +72,8 @@ public class LineClient {
   List<LineRoom> rooms;
   List<LineGroup> groups;
 
-  public LineClient() throws Exception {
-    throw new Exception("Please initialize LineClient with LineAPI.");
+  private LineClient() {
+//    throw new Exception("Please initialize LineClient with LineAPI.");
   }
 
   public LineClient(String id, String password) throws Exception {
@@ -81,7 +82,7 @@ public class LineClient {
     this.api = api;
     init();
   }
-  
+
   public LineClient(String id, String password, String certificate) throws Exception {
     LineApi api = new LineApiImpl();
     LoginResult result = api.login(id, password, certificate); // login
@@ -521,11 +522,11 @@ public class LineClient {
     return null;
   }
 
-  public void longPoll() throws TalkException, TException, Exception{
+  public void longPoll() throws TalkException, TException, Exception {
     // default count as 50
     longPoll(50);
   }
-  
+
   public void longPoll(int count) throws TalkException, TException, Exception {
     /**
      * Receive a list of operations that have to be processed by original Line client.
@@ -555,9 +556,11 @@ public class LineClient {
         } else {
           return;
         }
-      }catch (Exception e) {
+      } catch (Exception e) {
         System.out.println(e);
       }
+
+      List<String> excepCodes = Arrays.asList(new String[] {"60", "61"});
 
       for (Operation operation : operations) {
         OpType opType = operation.getType();
@@ -587,6 +590,20 @@ public class LineClient {
           LineBase sender = this.getContactOrRoomOrGroupById(raw_sender);
           LineBase receiver = this.getContactOrRoomOrGroupById(raw_receiver);
 
+          // If sender is not found, check member list of group chat sent to
+          if (sender == null && (receiver instanceof LineGroup || receiver instanceof LineRoom)) {
+            List<LineContact> contacts =
+                receiver instanceof LineGroup ? ((LineRoom) receiver).getContacts()
+                // If sender is not found, check member list of room chat sent to
+                    : ((LineGroup) receiver).getMembers();
+            for (LineContact contact : contacts) {
+              if (contact.getId().equals(raw_sender)) {
+                sender = contact;
+                break;
+              }
+            }
+          }
+
           if (sender == null || receiver == null) {
             this.refreshGroups();
             this.refreshContacts();
@@ -594,15 +611,26 @@ public class LineClient {
 
             sender = this.getContactOrRoomOrGroupById(raw_sender);
             receiver = this.getContactOrRoomOrGroupById(raw_receiver);
+          }
 
+          if (sender == null || receiver == null) {
+            List<Contact> contacts =
+                this.getApi().getContacts(Arrays.asList(new String[] {raw_sender, raw_sender}));
+            if (contacts != null && contacts.size() == 2) {
+              sender = new LineContact(this, contacts.get(0));
+              receiver = new LineContact(this, contacts.get(1));
+            }
             System.out.printf("[*] sender: %s  receiver: %s\n", sender, receiver);
             // yield (sender, receiver, message);
           } else {
-            System.out.printf("Sender:%s \t Receiver:%s\n [*] %s\n", sender, receiver, OpType.findByValue(operation.getType().getValue()));
-
+            System.out.printf("Sender:%s \t Receiver:%s\n [*] %s\n", sender, receiver,
+                OpType.findByValue(operation.getType().getValue()));
           }
 
-
+        } else if (excepCodes.contains(opType)) {
+          // pass
+        } else {
+          System.out.printf("[*] %s\n", OpType.findByValue(operation.getType().getValue()));
         }
         this.revision = Math.max(operation.getRevision(), this.revision);
       }

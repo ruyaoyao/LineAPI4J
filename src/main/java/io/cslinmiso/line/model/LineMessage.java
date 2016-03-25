@@ -8,7 +8,7 @@
  * <pre>
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 Trey Lin
+ * Copyright (c) 2015 Trey Lin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -56,7 +56,8 @@ public class LineMessage extends Message{
   public LineMessage(LineClient client, Message message) {
     this.setId(message.getId());
     this.setText(message.getText());
-
+    this.setFrom(message.getFrom());
+    this.setTo(message.getTo());
     this.setHasContent(message.isHasContent());
     this.setContentType(message.getContentType());
     this.setContentPreview(message.getContentPreview());

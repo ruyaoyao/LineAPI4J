@@ -31,19 +31,26 @@
  */
 package io.cslinmiso.line.model;
 
+import io.cslinmiso.line.api.LineApi;
+import io.cslinmiso.line.api.impl.LineApiImpl;
+
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import line.thrift.ContentType;
+import line.thrift.Message;
 import line.thrift.TMessageBox;
 import line.thrift.TalkException;
 
-import org.apache.commons.io.*;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.thrift.TException;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
 
@@ -168,8 +175,29 @@ public class LineBase {
   public void setClient(LineClient _client) {
     this._client = _client;
   }
-
-
+  
+  /**
+   * Send image by path.
+   * 
+   * @param path is local path of image to send
+   * @return true, if successful
+   * @throws Exception the exception
+   */
+  public boolean sendImage(String path) throws Exception {
+    return sendImage(new File(path));
+  }
+  
+  /**
+   * Send image.
+   * 
+   * @param file is File
+   * @return true, if successful
+   * @throws Exception the exception
+   */
+  public boolean sendImage(File file) throws Exception {
+    return sendImage(new FileInputStream(file));
+  }
+  
   /**
    * Send image.
    * 
@@ -177,37 +205,46 @@ public class LineBase {
    * @return true, if successful
    * @throws Exception the exception
    */
-  public boolean sendImage(InputStream is) throws Exception {
+  public boolean sendImage(InputStream is) throws Exception{
     /**
      * Send a image
      * 
-     * :param path: local path of image to send
+     * :param path: 
      **/
     try {
       LineMessage message = new LineMessage();
       message.setTo(getId());
       message.setText("");
       message.setContentType(ContentType.IMAGE);
-      byte[] bytes = IOUtils.toByteArray(is);
-      message.setContentPreview(bytes);
 
-      Map<String, String> metaData = new HashMap<String, String>();
+      Message sendMessage = _client.sendMessage(0, message);
+      String messageId = sendMessage.getId();
+      
+      // preparing params which is detail of image to upload server
+      ObjectMapper objectMapper = new ObjectMapper();
+      ObjectNode objectNode = objectMapper.createObjectNode();
+      objectNode.put("name", "media");
+      objectNode.put("oid", messageId);
+      objectNode.put("size", is.available());
+      objectNode.put("type", "image");
+      objectNode.put("ver", "1.0");
 
-      String url = null;
-
-      metaData.put("PREVIEW_URL", url);
-      metaData.put("DOWNLOAD_URL", url);
-      metaData.put("public", url);
-      message.setContentMetadata(metaData);
-
-      _client.sendMessage(0, message);
-
+      Map<String, Object> data = new HashMap<String, Object>();
+//      data.put("file", file);
+      data.put("params", objectMapper.writeValueAsString(objectNode));
+      
+      String url = LineApi.LINE_UPLOADING_URL;
+      LineApiImpl api = (LineApiImpl) _client.getApi();
+      boolean isUploaded = api.postImage(url, data, is);
+      
+      if(isUploaded == false){
+        throw new Exception("Fail to upload image.");
+      }
       return true;
     } catch (Exception e) {
       throw e;
     }
   }
-
 
   /**
    * Send a image with given image url
@@ -220,23 +257,12 @@ public class LineBase {
     if (StringUtils.isEmpty(url)) return false;
     try {
       HttpResponse<InputStream> response = Unirest.get(url).asBinary();
-      if (response.getBody() != null) {
+      InputStream is = response.getBody();
+      if (is == null) {
         return false;
       }
-      LineMessage message = new LineMessage();
-      message.setTo(getId());
-      message.setText("");
-      message.setContentType(ContentType.IMAGE);
-      byte[] bytes = IOUtils.toByteArray(response.getBody());
-      message.setContentPreview(bytes);
-
-      Map<String, String> metaData = new HashMap<String, String>();
-      metaData.put("PREVIEW_URL", url);
-      metaData.put("DOWNLOAD_URL", url);
-      metaData.put("public", "true");
-      message.setContentMetadata(metaData);
-
-      _client.sendMessage(1, message);
+      
+      sendImage(is);
 
       return true;
     } catch (Exception e) {
