@@ -78,8 +78,12 @@ public interface LineApi {
    * */
   public static final String LINE_HTTP_IN_URL = LINE_DOMAIN + "/P4";
 
+  public static final String LINE_NORMAL_LONGPOLL_URL = LINE_DOMAIN + "/NP4";
+  
+  public static final String LINE_COMPACT_MESSAGE_URL = LINE_DOMAIN + "/C5";
+  
   /** The Constant LINE_COMMAND_URL. */
-  public static final String LINE_COMMAND_URL = LINE_DOMAIN + "S4";
+  public static final String LINE_COMMAND_URL = LINE_DOMAIN + "/S4";
 
   /** The Constant LINE_CERTIFICATE_URL. */
   public static final String LINE_CERTIFICATE_URL = LINE_DOMAIN + "/Q";
@@ -87,6 +91,13 @@ public interface LineApi {
   /** The Constant LINE_SHOP_URL. */
   public static final String LINE_SHOP_URL = LINE_DOMAIN + "/SHOP4";
 
+  /** 
+   * The Constant LINE_QRCODE_PREFIX_URL.
+   *  which only available from LINE app on mobile device.
+   *  "line://au/q/" combine with verifier from AuthQrcode will be the complete url. 
+   **/
+  public static final String LINE_QRCODE_PREFIX_URL = "line://au/q/";
+  
   /** The Constant LINE_SESSION_LINE_URL. */
   public static final String LINE_SESSION_LINE_URL = LINE_DOMAIN + "/authct/v1/keys/line";
 
