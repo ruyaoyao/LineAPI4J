@@ -115,8 +115,6 @@ public interface LineApi {
 
   LoginResult login(String id, String password, String certificate) throws Exception;
 
-  LoginResult loginWithVerifier(String verifier) throws Exception;
-
   boolean updateAuthToken() throws Exception;
 
   /*
@@ -152,9 +150,24 @@ public interface LineApi {
   /*
    * (non-Javadoc)
    * 
-   * @see io.cslinmiso.line.api.LineApi#_findAndAddContactsByUserid(int, java.lang.String)
+   * @see io.cslinmiso.line.api.LineApi#findContactByUserid(java.lang.String)
+   */
+  Contact findContactByUserid(String userid) throws TalkException, TException;
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see io.cslinmiso.line.api.LineApi#findAndAddContactsByUserid(int, java.lang.String)
    */
   Map<String, Contact> findAndAddContactsByUserid(int reqSeq, String userid) throws TalkException,
+      TException;
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see io.cslinmiso.line.api.LineApi#findContactsByEmail(java.util.Set)
+   */
+  public Map<String, Contact> findContactsByEmail(Set<String> emails) throws TalkException,
       TException;
 
   /*
@@ -164,6 +177,14 @@ public interface LineApi {
    */
   Map<String, Contact> findAndAddContactsByEmail(int reqSeq, Set<String> emails)
       throws TalkException, TException;
+
+  /*
+   * (non-Javadoc)
+   * 
+   * @see io.cslinmiso.line.api.LineApi#findContactsByPhone(java.util.Set)
+   */
+  public Map<String, Contact> findContactsByPhone(Set<String> phones) throws TalkException,
+      TException;
 
   /*
    * (non-Javadoc)

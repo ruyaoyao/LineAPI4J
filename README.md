@@ -7,7 +7,7 @@ LineAPI4J
 
 You might wonder what do you need it, when you already have LINE client installed on your PC/MAC/Mobile devices.
 
-*LineAPI4J* allows you to build your own line bot, and you're able to `send messages, stickers and images` with it.
+*LineAPI4J* allows you to build your own line bot, and you're able to `send messages, stickers, files and images` with it.
 
 Inspired by [LINE](https://github.com/carpedm20/line), LINE API written in Python by [carpedm20](https://github.com/carpedm20).
 
@@ -43,12 +43,23 @@ Once you have LineContact, you can start from there. Check `LineContact` for mor
 
 see example App.java in io.cslinmiso.line.LineAPI4J
 
-### Methods
+### CoreMethods
 
+**LineContact.sendMessage(String text)**
 
+**LineContact.sendFile()**
+
+Parameter: Local Path, File 
+		
+		// sending local file
+        File file = new File("/Users/treylin/Downloads/file.zip");
+        someoneContact.sendFile(file);
+        // With Path        
+        someoneContact.sendFile("/Users/treylin/Downloads/file.zip");
+        
 **LineContact.sendImage()**
 
-Parameter: URL String, File, InputStream
+Parameter: Local Path, File, InputStream
 
         // Sending image by local image path
         someoneContact.sendImage("/Users/treylin/Downloads/yajpg");
@@ -63,9 +74,15 @@ Parameter: URL String, File, InputStream
 
 **LineContact.sendImageWithUrl()**
 
-Parameter: URL String
+Parameter: URL
 
         someoneContact.sendImageWithURL("https://goo.gl/qXdQrf");
+        
+**LineContact.sendFileWithUrl()**
+
+Parameter: URL
+
+        someoneContact.sendFileWithURL("https://goo.gl/qXdQrf");
 
 
 * *TODO fix some problems*

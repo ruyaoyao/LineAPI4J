@@ -83,7 +83,6 @@ public class LineGroup extends LineBase {
       this.members.add(new LineContact(client, member));
     }
 
-
     this.invitee.clear();
     if(group.getInvitee()!=null){
       if (group.getInvitee().size() >= 1) {
@@ -93,7 +92,6 @@ public class LineGroup extends LineBase {
       }
     }
   }
-
 
   public boolean acceptGroupInvitation() throws Exception {
     if (isJoined() == false) {
@@ -139,7 +137,6 @@ public class LineGroup extends LineBase {
     }
   }
   
-
   public boolean containsMemberId(String id) {
     for (LineContact member : members) {
       if (id.equals(member.getId())) {
@@ -149,7 +146,6 @@ public class LineGroup extends LineBase {
     return false;
   } 
   
-
   public Group getGroup() {
     return _group;
   }

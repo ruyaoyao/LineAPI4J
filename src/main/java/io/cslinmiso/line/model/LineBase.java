@@ -8,7 +8,7 @@
  * <pre>
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 Trey Lin
+ * Copyright (c) 2016 Trey Lin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -34,6 +34,7 @@ package io.cslinmiso.line.model;
 import io.cslinmiso.line.api.LineApi;
 import io.cslinmiso.line.api.impl.LineApiImpl;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -56,9 +57,9 @@ import com.mashape.unirest.http.Unirest;
 
 
 /**
- * The Class LineBase.
+ * The abstract Class LineBase.
  */
-public class LineBase {
+public abstract class LineBase {
 
   /** The id. */
   public String id;
@@ -67,7 +68,6 @@ public class LineBase {
   public LineClient _client;
 
   // _messageBox = null;
-
 
   /**
    * Send message.
@@ -195,7 +195,7 @@ public class LineBase {
    * @throws Exception the exception
    */
   public boolean sendImage(File file) throws Exception {
-    return sendImage(new FileInputStream(file));
+    return sendImage(new BufferedInputStream(new FileInputStream(file)));
   }
 
   /**
@@ -206,11 +206,6 @@ public class LineBase {
    * @throws Exception the exception
    */
   public boolean sendImage(InputStream is) throws Exception {
-    /**
-     * Send a image
-     * 
-     * :param path:
-     **/
     try {
       LineMessage message = new LineMessage();
       message.setTo(getId());
@@ -270,6 +265,14 @@ public class LineBase {
     }
   }
 
+  public boolean sendFile(String path) throws Exception {
+    return sendFile("", path);
+  }
+
+  public boolean sendFile(File file) throws Exception {
+    return sendFile("", file);
+  }
+
   /**
    * Send file.
    * 
@@ -281,10 +284,6 @@ public class LineBase {
   public boolean sendFile(String name, String path) throws Exception {
     File tmpFile = new File(path);
     return sendFile(name, tmpFile);
-  }
-
-  public boolean sendFile(File file) throws Exception {
-    return sendFile("", file);
   }
 
   /**
@@ -300,19 +299,30 @@ public class LineBase {
       throw new Exception("File is not exist.");
     }
     String fileName;
-    String fileSize;
     try {
       if (StringUtils.isNotEmpty(name)) {
         fileName = name;
       } else {
         fileName = file.getName();
       }
+      sendFile(fileName, new BufferedInputStream(new FileInputStream(file)));
+      return true;
+    } catch (Exception e) {
+      throw e;
+    }
+  }
+
+  public boolean sendFile(String name, InputStream is) throws Exception {
+    String fileName = "SendByLineAPI4J";
+    String fileSize = String.valueOf(is.available());
+    try {
+      if (StringUtils.isNotEmpty(name)) {
+        fileName = name;
+      }
 
       LineMessage message = new LineMessage();
       message.setTo(getId());
       message.setContentType(ContentType.FILE);
-      InputStream is = new FileInputStream(file);
-      fileSize = String.valueOf(is.available());
 
       Map<String, String> contentMetadata = new HashMap<String, String>();
       contentMetadata.put("FILE_NAME", fileName);
@@ -342,6 +352,27 @@ public class LineBase {
         throw new Exception("Fail to upload file.");
       }
       return true;
+    } catch (Exception e) {
+      throw e;
+    }
+  }
+
+  /**
+   * Send a file with given file url
+   * 
+   * @param url the file url to send
+   * @return true, if successful
+   * @throws Exception the exception
+   */
+  public boolean sendFileWithURL(String url) throws Exception {
+    if (StringUtils.isEmpty(url)) return false;
+    try {
+      HttpResponse<InputStream> response = Unirest.get(url).asBinary();
+      InputStream is = response.getBody();
+      if (is == null) {
+        return false;
+      }
+      return sendFile(url.substring(url.lastIndexOf("/") + 1), is);
     } catch (Exception e) {
       throw e;
     }

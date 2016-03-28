@@ -14,7 +14,7 @@
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
  * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
+ * copies of the Software, and to permit persons profileImageto whom the Software is
  * furnished to do so, subject to the following conditions:
  *
  * The above copyright notice and this permission notice shall be included in all
@@ -82,7 +82,6 @@ public class LineContact extends LineBase {
      * 
      * :param client: LineClient instance :param contact: Conatct instace
      */
-
     this.setClient(client);
     this.setContact(contact);
 
@@ -280,4 +279,26 @@ public class LineContact extends LineBase {
     return LineApi.LINE_PROFILE_URL + this._contact.picturePath;
   }
 
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+    int result = 1;
+    result = prime * result + ((_contact == null) ? 0 : _contact.hashCode());
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) return true;
+    if (obj == null) return false;
+    if (getClass() != obj.getClass()) return false;
+    LineContact other = (LineContact) obj;
+    if (_contact == null) {
+      if (other._contact != null) return false;
+    } else if (!_contact.getMid().equals(other._contact.getMid())) return false;
+    return true;
+  }
+
+  
+  
 }

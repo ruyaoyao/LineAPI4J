@@ -1,5 +1,4 @@
 /**
- * 
  * @Package: io.cslinmiso.line.model
  * @FileName: Utility.java
  * @author: treylin
@@ -69,7 +68,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * 
- * @author Trey
+ * @author Trey Lin
  */
 public class Utility {
 
@@ -158,17 +157,13 @@ public class Utility {
   }
 
   public static String getQueryString(Map target) {
-    String result = "";
-    // Map<String, String> map = new HashMap<String, String>();
+    StringBuffer sb = new StringBuffer();
     for (Object key : target.keySet()) {
       if ("_".equals(key)) continue;
-      // System.out.println("key=" + key);
       String[] t = (String[]) target.get(key);
-      // System.out.println("key=" + t[0]);
-      result += String.valueOf(key) + "=" + t[0] + ", ";
-
+      sb.append(String.format("%s=%s, ", String.valueOf(key), t[0]));
     }
-    return result;
+    return sb.toString();
   }
 
   public static Map<String, String> getQueryMap(String query) {
@@ -193,7 +188,6 @@ public class Utility {
       for (int i = 0; i < digested.length; i++) {
         sb.append(Integer.toHexString(0xff & digested[i]));
       }
-      // System.out.println(sb.toString());
       return sb.toString();
     } catch (NoSuchAlgorithmException ex) {
       // 錯誤訊息
@@ -248,9 +242,7 @@ public class Utility {
     List<String> rst = new ArrayList<String>();
     BufferedReader br = null;
     try {
-      br =
-          new BufferedReader(new InputStreamReader(
-              new FileInputStream(fileName), "UTF-8"));
+      br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
       String in = null;
       while ((in = br.readLine()) != null) {
         rst.add(in);
@@ -262,7 +254,6 @@ public class Utility {
     }
     return rst;
   }
-
 
   public static void writeFile(List<String> data, File f) throws IOException {
     writeFile(data, f.getAbsolutePath());
@@ -299,7 +290,6 @@ public class Utility {
    * @throws IOException
    */
   public static void writeFile(InputStream inputData, String filePath) throws IOException {
-    InputStream input = null;
     FileOutputStream fos = null;
     try {
       fos = new FileOutputStream(filePath);

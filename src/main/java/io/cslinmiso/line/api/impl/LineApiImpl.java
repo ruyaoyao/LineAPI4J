@@ -77,7 +77,6 @@ import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 
-
 public class LineApiImpl implements LineApi {
 
   private static final String EMAIL_REGEX = "[^@]+@[^@]+\\.[^@]+";
@@ -88,7 +87,7 @@ public class LineApiImpl implements LineApi {
   private String ip = "127.0.0.1";
 
   /** The version. */
-  private String version = "3.7.4";
+  private String version = "4.0.1";
 
   /** The com_name. */
   private String systemName = "Line4J";
@@ -140,7 +139,7 @@ public class LineApiImpl implements LineApi {
     boolean isMac = true;
 
     if (isMac) {
-      osVersion = "10.9.4-MAVERICKS-x64";
+      osVersion = "10.10.4-YOSEMITE-x64";
       userAgent = "DESKTOP:MAC:" + osVersion + "(" + version + ")";
       app = "DESKTOPMAC\t" + osVersion + "\tMAC\t" + version;
     } else {
@@ -266,7 +265,6 @@ public class LineApiImpl implements LineApi {
     // Once the client passed the verification, switch connection to HTTP_IN_URL
     this._client = ready();
     return result;
-
   }
 
   /*
@@ -284,44 +282,6 @@ public class LineApiImpl implements LineApi {
 
     TProtocol protocol = new TCompactProtocol(transport);
     setClient(new TalkService.Client(protocol));
-  }
-
-  // login with verifier that is un-certified
-  public LoginResult loginWithVerifier(String verifier) throws Exception {
-
-    Map json = null;
-    _headers.put("X-Line-Access", verifier);
-
-    json = getCertResult(LINE_CERTIFICATE_URL);
-    if (json == null) {
-      throw new Exception("fail to pass certificate check.");
-    }
-
-    // login with verifier
-    json = (Map) json.get("result");
-    verifier = (String) json.get("verifier");
-
-
-    THttpClient transport = new THttpClient(LINE_HTTP_URL);
-    transport.setCustomHeaders(_headers);
-    transport.open();
-
-    TProtocol protocol = new TCompactProtocol(transport);
-
-    this._client = new TalkService.Client(protocol);
-
-    LoginResult result = this._client.loginWithVerifierForCertificate(verifier);
-
-    if (result.getType() == LoginResultType.SUCCESS) {
-      // this.certificate = msg.certificate
-      setAuthToken(result.getAuthToken());
-      setCertificate(result.getCertificate());
-      return result;
-    } else if (result.getType() == LoginResultType.REQUIRE_QRCODE) {
-      throw new Exception("require QR code");
-    } else {
-      throw new Exception("require device confirm");
-    }
   }
 
   /*
@@ -426,11 +386,35 @@ public class LineApiImpl implements LineApi {
    * @throws TException
    * @throws TalkException
    **/
+  public Contact findContactByUserid(String userid)
+      throws TalkException, TException {
+    return this._client.findContactByUserid(userid);
+  }
+  
+  /**
+   * find and add Contact by user id
+   * 
+   * @return
+   * @throws TException
+   * @throws TalkException
+   **/
   public Map<String, Contact> findAndAddContactsByUserid(int reqSeq, String userid)
       throws TalkException, TException {
     return this._client.findAndAddContactsByUserid(0, userid);
   }
-
+  
+  /**
+   * find contacts by email (not tested)
+   * 
+   * @return
+   * @throws TException
+   * @throws TalkException
+   **/
+  public Map<String, Contact> findContactsByEmail(Set<String> emails)
+      throws TalkException, TException {
+    return this._client.findContactsByEmail(emails);
+  }
+  
   /**
    * find and add contact by email (not tested)
    * 
@@ -451,9 +435,22 @@ public class LineApiImpl implements LineApi {
    * @throws TException
    * @throws TalkException
    **/
-  public Map<String, Contact> findAndAddContactsByPhone(int reqSeq, Set<String> phone)
+  public Map<String, Contact> findContactsByPhone( Set<String> phones)
       throws TalkException, TException {
-    return this._client.findAndAddContactsByPhone(0, phone);
+    return this._client.findContactsByPhone(phones);
+  }
+  
+  /**
+   * find and add contact by phone number (not tested)
+   * 
+   * @return
+   * @return
+   * @throws TException
+   * @throws TalkException
+   **/
+  public Map<String, Contact> findAndAddContactsByPhone(int reqSeq, Set<String> phones)
+      throws TalkException, TException {
+    return this._client.findAndAddContactsByPhone(0, phones);
   }
 
   /**
@@ -471,7 +468,6 @@ public class LineApiImpl implements LineApi {
     /** Get all contacts of your LINE account **/
     return this._client.getAllContactIds();
   }
-
 
   public List<String> getBlockedContactIds() throws TalkException, TException {
     /** Get all blocked contacts of your LINE account **/

@@ -31,6 +31,9 @@
  */
 package io.cslinmiso.line.model;
 
+import io.cslinmiso.line.api.LineApi;
+import io.cslinmiso.line.api.impl.LineApiImpl;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -56,9 +59,10 @@ import line.thrift.TalkException;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
-import io.cslinmiso.line.api.LineApi;
-import io.cslinmiso.line.api.impl.LineApiImpl;
-
+/**
+ * 
+ * @author Trey Lin
+ */
 public class LineClient {
 
   LineApi api;
@@ -104,9 +108,61 @@ public class LineClient {
     // initialize
     this.setRevision(this.api.getLastOpRevision());
     this.getProfile();
-    this.refreshGroups();
-    this.refreshContacts();
-    this.refreshActiveRooms();
+    try {
+      this.refreshGroups();
+    } catch (Exception e) {
+      // pass
+    }
+    try {
+      this.refreshContacts();
+    } catch (Exception e) {
+      // pass
+    }
+    try {
+      this.refreshActiveRooms();
+    } catch (Exception e) {
+      // pass
+    }
+  }
+
+  /**
+   * 用LINE ID搜尋並加入好友.
+   * 
+   * @param userid the userid
+   * @return LineContact
+   * @throws Exception the exception
+   */
+  public LineContact findContactByUserid(String userid) throws Exception {
+
+    if (checkAuth()) {
+      Contact thatContact;
+      try {
+        thatContact = this.api.findContactByUserid(userid);
+        LineContact lineContact = new LineContact(this, thatContact);
+        return lineContact;
+      } catch (TalkException te) {
+        new Exception(te.getReason());
+      }
+    }
+    return null;
+  }
+
+  private LineContact verifyContact(Map<String, Contact> contactMap) throws Exception {
+    if (contactMap != null && contactMap.size() > 0) {
+      Contact thatContact = contactMap.get(0);
+
+      for (LineContact tmpContact : this.contacts) {
+        Contact _contact = tmpContact.getContact();
+        if (_contact.equals(thatContact)) {
+          throw new Exception(String.format("%s already exists.", thatContact.getDisplayName()));
+        }
+      }
+      LineContact lineContact = new LineContact(this, thatContact);
+      this.contacts.add(lineContact);
+
+      return lineContact;
+    }
+    return null;
   }
 
   /**
@@ -116,8 +172,17 @@ public class LineClient {
    * @return the map
    * @throws Exception the exception
    */
-  public Map<String, Contact> findAndAddContactsByUserid(String userid) throws Exception {
-    return checkAuth() != true ? null : this.api.findAndAddContactsByUserid(0, userid);
+  public LineContact findAndAddContactsByUserid(String userid) throws Exception {
+
+    if (checkAuth()) {
+      try {
+        Map<String, Contact> contactMap = this.api.findAndAddContactsByUserid(0, userid);
+        return verifyContact(contactMap);
+      } catch (TalkException te) {
+        new Exception(te.getReason());
+      }
+    }
+    return null;
   }
 
   /**
@@ -126,8 +191,17 @@ public class LineClient {
    * @return
    * @throws Exception
    **/
-  public Map<String, Contact> findAndAddContactsByEmail(Set<String> emails) throws Exception {
-    return checkAuth() != true ? null : this.api.findAndAddContactsByEmail(0, emails);
+  public LineContact findAndAddContactsByEmail(Set<String> emails) throws Exception {
+
+    if (checkAuth()) {
+      try {
+        Map<String, Contact> contactMap = this.api.findAndAddContactsByEmail(0, emails);
+        return verifyContact(contactMap);
+      } catch (TalkException te) {
+        new Exception(te.getReason());
+      }
+    }
+    return null;
   }
 
   /**
@@ -137,8 +211,16 @@ public class LineClient {
    * @return
    * @throws Exception
    **/
-  public Map<String, Contact> findAndAddContactsByPhone(Set<String> phone) throws Exception {
-    return checkAuth() != true ? null : this.api.findAndAddContactsByPhone(0, phone);
+  public LineContact findAndAddContactsByPhone(Set<String> phone) throws Exception {
+    if (checkAuth()) {
+      try {
+        Map<String, Contact> contactMap = this.api.findAndAddContactsByPhone(0, phone);
+        return verifyContact(contactMap);
+      } catch (TalkException te) {
+        new Exception(te.getReason());
+      }
+    }
+    return null;
   }
 
   public Profile getProfile() throws Exception {
@@ -152,8 +234,12 @@ public class LineClient {
 
     /** Get `profile` of LINE account **/
     if (checkAuth()) {
-      this.profile = this.api.getProfile();
-      return profile;
+      if (this.profile == null) {
+        this.profile = this.api.getProfile();
+        return profile;
+      } else {
+        return this.profile;
+      }
     } else {
       return null;
     }
@@ -168,7 +254,7 @@ public class LineClient {
     return null;
   }
 
-  public LineContact getContactById(String id) {
+  public LineContact getContactById(String id){
     for (LineContact contact : contacts) {
       if (contact.getId().equals(id)) {
         return contact;
@@ -271,7 +357,6 @@ public class LineClient {
     }
   }
 
-
   public LineGroup createGroupWithIds(String name, List<String> ids) throws TalkException,
       TException, Exception {
     /**
@@ -287,7 +372,6 @@ public class LineClient {
     }
     return null;
   }
-
 
   public LineGroup createGroupWithContacts(String name, List<LineContact> contacts)
       throws TalkException, TException, Exception {
@@ -346,6 +430,10 @@ public class LineClient {
 
   }
 
+  public void inviteIntoGroup(String groupId, List<String> contactIds) throws Exception {
+    this.api.inviteIntoGroup(0, groupId, contactIds);
+  }
+  
   public void inviteIntoGroup(LineGroup group, List<LineContact> contacts) throws Exception {
     /*
      * Invite contacts into group
@@ -354,11 +442,10 @@ public class LineClient {
      */
     if (checkAuth()) {
       List<String> contactIds = new ArrayList<String>();
-
       for (LineContact contact : contacts) {
         contactIds.add(contact.getId());
       }
-      this.api.inviteIntoGroup(0, group.getId(), contactIds);
+      inviteIntoGroup(group.getId(), contactIds);
     }
   }
 
@@ -468,11 +555,8 @@ public class LineClient {
      * :param room: LineRoom instance to leave
      **/
     if (checkAuth()) {
-
       this.api.leaveRoom(room.getId());
-      this.rooms.remove(room);
-
-      return true;
+      return this.rooms.remove(room);
     }
     return false;
 
@@ -557,7 +641,7 @@ public class LineClient {
         operations = this.api.fetchOperations(this.getRevision(), count);
       } catch (TalkException e) {
         if (ErrorCode.INVALID_MID == e.getCode()) {
-          throw new Exception("user logged in to another machine");
+          throw new Exception("user logged onto another machine");
         } else {
           return;
         }
@@ -645,7 +729,6 @@ public class LineClient {
         }
         this.revision = Math.max(operation.getRevision(), this.revision);
       }
-
 
     }
 
