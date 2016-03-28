@@ -3,12 +3,12 @@
  * @Package:  io.cslinmiso.line.model
  * @FileName: LineContact.java
  * @author:   trey
- * @date:     2015/9/2, 下午 02:39:39
+ * @date:     2016/03/28, 下午 02:39:39
  * 
  * <pre>
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 Trey Lin
+ * Copyright (c) 2016 Trey Lin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -31,6 +31,8 @@
  */
 
 package io.cslinmiso.line.model;
+
+import io.cslinmiso.line.api.LineApi;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -274,8 +276,8 @@ public class LineContact extends LineBase {
     return this._contact.settings;
   }
 
-  public java.lang.String getPicturePath() {
-    return this._contact.picturePath;
+  public String getPicturePath() {
+    return LineApi.LINE_PROFILE_URL + this._contact.picturePath;
   }
 
 }

@@ -41,7 +41,6 @@ import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -206,7 +205,7 @@ public class LineApiImpl implements LineApi {
 
     if (StringUtils.isNotEmpty(certificate)) {
       setCertificate(certificate);
-    }else{
+    } else {
       // read the certificate file if it exists
       try {
         List<String> readFile = Utility.readFile(LineApiImpl.CERT_FILE);
@@ -396,7 +395,7 @@ public class LineApiImpl implements LineApi {
     return Utility.toMap(jsonResponse.getBody().getObject());
   }
 
-  public boolean postImage(String url, Map<String, Object> data, InputStream is) throws Exception {
+  public boolean postContent(String url, Map<String, Object> data, InputStream is) throws Exception {
     Unirest unirest = new Unirest();
     byte[] byteArray = IOUtils.toByteArray(is);
     HttpResponse<JsonNode> jsonResponse =
@@ -564,6 +563,13 @@ public class LineApiImpl implements LineApi {
     /** Invite contacts into group **/
     // seq = 0;
     this._client.inviteIntoGroup(seq, groupId, contactIds);
+  }
+
+  public void kickoutFromGroup(int seq, String groupId, List<String> contactIds)
+      throws TalkException, TException {
+    /** Kick a group members **/
+    // seq = 0;
+    this._client.kickoutFromGroup(seq, groupId, contactIds);
   }
 
   public void leaveGroup(String id) throws TalkException, TException {

@@ -93,6 +93,8 @@ public interface LineApi {
   /** The Constant LINE_SESSION_NAVER_URL. */
   public static final String LINE_SESSION_NAVER_URL = LINE_DOMAIN + "/authct/v1/keys/naver";
 
+  public static final String LINE_PROFILE_URL = "http://dl.profile.line.naver.jp";
+
   public static final String LINE_OBJECT_STORAGE_URL = "http://os.line.naver.jp/os/m/";
 
   public static final String LINE_UPLOADING_URL = "https://os.line.naver.jp/talk/m/upload.nhn";
@@ -116,7 +118,7 @@ public interface LineApi {
   LoginResult loginWithVerifier(String verifier) throws Exception;
 
   boolean updateAuthToken() throws Exception;
-  
+
   /*
    * (non-Javadoc)
    * 
@@ -145,7 +147,7 @@ public interface LineApi {
    */
   Map getCertResult(String url) throws Exception;
 
-  boolean postImage(String url, Map<String, Object> data, InputStream is) throws Exception;
+  boolean postContent(String url, Map<String, Object> data, InputStream is) throws Exception;
 
   /*
    * (non-Javadoc)
@@ -277,6 +279,9 @@ public interface LineApi {
    */
   void cancelGroupInvitation(int seq, String groupId, List<String> contactIds)
       throws TalkException, TException;
+
+  void kickoutFromGroup(int seq, String groupId, List<String> contactIds) throws TalkException,
+      TException;
 
   /*
    * (non-Javadoc)

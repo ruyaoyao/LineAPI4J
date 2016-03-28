@@ -153,7 +153,6 @@ public class LineClient {
     /** Get `profile` of LINE account **/
     if (checkAuth()) {
       this.profile = this.api.getProfile();
-
       return profile;
     } else {
       return null;
@@ -162,7 +161,7 @@ public class LineClient {
 
   public LineContact getContactByName(String name) {
     for (LineContact contact : contacts) {
-      if (name.equals(contact.getName())) {
+      if (contact.getName().equals(name)) {
         return contact;
       }
     }
@@ -171,7 +170,7 @@ public class LineClient {
 
   public LineContact getContactById(String id) {
     for (LineContact contact : contacts) {
-      if (id.equals(contact.getId())) {
+      if (contact.getId().equals(id)) {
         return contact;
       }
     }
@@ -229,7 +228,6 @@ public class LineClient {
         this.contacts.add(new LineContact(this, contact));
       }
     }
-    // self.contacts.sort()
   }
 
   public List<LineContact> getHiddenContacts() throws Exception {
@@ -355,12 +353,20 @@ public class LineClient {
      * :param group: LineGroup instance :param contacts: LineContact instances to invite
      */
     if (checkAuth()) {
-      List<String> contactIds = this.api.getAllContactIds();
+      List<String> contactIds = new ArrayList<String>();
 
       for (LineContact contact : contacts) {
         contactIds.add(contact.getId());
       }
       this.api.inviteIntoGroup(0, group.getId(), contactIds);
+    }
+  }
+
+  public void kickoutFromGroup(LineGroup group, List<String> contactIds) throws Exception {
+    /** Kick a group members **/
+    // seq = 0;
+    if (checkAuth()) {
+      this.api.kickoutFromGroup(0, group.getId(), contactIds);
     }
   }
 
@@ -415,10 +421,7 @@ public class LineClient {
         contactIds.add(contact.getId());
       }
 
-      LineRoom room = new LineRoom(this, this.api.createRoom(contactIds.size(), contactIds));
-      this.rooms.add(room);
-
-      return room;
+      return createRoomWithIds(contactIds);
     }
     return null;
 
@@ -474,7 +477,7 @@ public class LineClient {
     return false;
 
   }
-  
+
   /**
    * Send a message
    * 

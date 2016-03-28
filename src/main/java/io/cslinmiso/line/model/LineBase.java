@@ -175,7 +175,7 @@ public class LineBase {
   public void setClient(LineClient _client) {
     this._client = _client;
   }
-  
+
   /**
    * Send image by path.
    * 
@@ -186,7 +186,7 @@ public class LineBase {
   public boolean sendImage(String path) throws Exception {
     return sendImage(new File(path));
   }
-  
+
   /**
    * Send image.
    * 
@@ -197,7 +197,7 @@ public class LineBase {
   public boolean sendImage(File file) throws Exception {
     return sendImage(new FileInputStream(file));
   }
-  
+
   /**
    * Send image.
    * 
@@ -205,11 +205,11 @@ public class LineBase {
    * @return true, if successful
    * @throws Exception the exception
    */
-  public boolean sendImage(InputStream is) throws Exception{
+  public boolean sendImage(InputStream is) throws Exception {
     /**
      * Send a image
      * 
-     * :param path: 
+     * :param path:
      **/
     try {
       LineMessage message = new LineMessage();
@@ -219,7 +219,7 @@ public class LineBase {
 
       Message sendMessage = _client.sendMessage(0, message);
       String messageId = sendMessage.getId();
-      
+
       // preparing params which is detail of image to upload server
       ObjectMapper objectMapper = new ObjectMapper();
       ObjectNode objectNode = objectMapper.createObjectNode();
@@ -230,14 +230,14 @@ public class LineBase {
       objectNode.put("ver", "1.0");
 
       Map<String, Object> data = new HashMap<String, Object>();
-//      data.put("file", file);
+      // data.put("file", file);
       data.put("params", objectMapper.writeValueAsString(objectNode));
-      
+
       String url = LineApi.LINE_UPLOADING_URL;
       LineApiImpl api = (LineApiImpl) _client.getApi();
-      boolean isUploaded = api.postImage(url, data, is);
-      
-      if(isUploaded == false){
+      boolean isUploaded = api.postContent(url, data, is);
+
+      if (isUploaded == false) {
         throw new Exception("Fail to upload image.");
       }
       return true;
@@ -261,28 +261,90 @@ public class LineBase {
       if (is == null) {
         return false;
       }
-      
+
       sendImage(is);
 
       return true;
     } catch (Exception e) {
       throw e;
     }
-    // response = requests.get(url, stream=True)
-    //
-    // message = Message(to=self.id, text=None)
-    // message.contentType = ContentType.IMAGE
-    // message.contentPreview = response.raw.read()
-    // #message.contentPreview = url.encode('utf-8')
-    //
-    // message.contentMetadata = {
-    // 'PREVIEW_URL': url,
-    // 'DOWNLOAD_URL': url,
-    // '}public': "True",
-    // }
-    //
-    // self._client.sendMessage(1, message)
-    // return true;
+  }
+
+  /**
+   * Send file.
+   * 
+   * @param String name
+   * @param String path
+   * @return true, if successful
+   * @throws Exception the exception
+   */
+  public boolean sendFile(String name, String path) throws Exception {
+    File tmpFile = new File(path);
+    return sendFile(name, tmpFile);
+  }
+
+  public boolean sendFile(File file) throws Exception {
+    return sendFile("", file);
+  }
+
+  /**
+   * Send file.
+   * 
+   * @param String name
+   * @param String path
+   * @return true, if successful
+   * @throws Exception the exception
+   */
+  public boolean sendFile(String name, File file) throws Exception {
+    if (!file.exists()) {
+      throw new Exception("File is not exist.");
+    }
+    String fileName;
+    String fileSize;
+    try {
+      if (StringUtils.isNotEmpty(name)) {
+        fileName = name;
+      } else {
+        fileName = file.getName();
+      }
+
+      LineMessage message = new LineMessage();
+      message.setTo(getId());
+      message.setContentType(ContentType.FILE);
+      InputStream is = new FileInputStream(file);
+      fileSize = String.valueOf(is.available());
+
+      Map<String, String> contentMetadata = new HashMap<String, String>();
+      contentMetadata.put("FILE_NAME", fileName);
+      contentMetadata.put("FILE_SIZE", fileSize);
+      message.setContentMetadata(contentMetadata);
+
+      Message sendMessage = _client.sendMessage(0, message);
+      String messageId = sendMessage.getId();
+
+      // preparing params which is detail of image to upload server
+      ObjectMapper objectMapper = new ObjectMapper();
+      ObjectNode objectNode = objectMapper.createObjectNode();
+      objectNode.put("name", fileName);
+      objectNode.put("oid", messageId);
+      objectNode.put("size", fileSize);
+      objectNode.put("type", "file");
+      objectNode.put("ver", "1.0");
+
+      Map<String, Object> data = new HashMap<String, Object>();
+      data.put("params", objectMapper.writeValueAsString(objectNode));
+
+      String url = LineApi.LINE_UPLOADING_URL;
+      LineApiImpl api = (LineApiImpl) _client.getApi();
+      boolean isUploaded = api.postContent(url, data, is);
+
+      if (isUploaded == false) {
+        throw new Exception("Fail to upload file.");
+      }
+      return true;
+    } catch (Exception e) {
+      throw e;
+    }
   }
 
   public List<LineMessage> getRecentMessages(int count) throws Exception {
@@ -304,15 +366,6 @@ public class LineBase {
     } finally {
       return msgList;
     }
-
-
-    // return messages
-    // else{
-    // self._messageBox = self._client.getMessageBox(self.id)
-    // messages = self._client.getRecentMessages(self._messageBox, count)
-    //
-    // return messages
-
   }
 
 
