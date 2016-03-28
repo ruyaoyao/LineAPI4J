@@ -1,16 +1,19 @@
-LineAPI4J
+LineAPI4J 
 =========
-` Login problem fixed.`
+
+*March 28th, 2016* `Now, you can keep the log session alive, doesn't have to repeat entering pincode.`
 
 *LineAPI4J* is a library written in Java with compressed thrift client.
 
 You might wonder what do you need it, when you already have LINE client installed on your PC/MAC/Mobile devices.
 
-*LineAPI4J* allows you to build your own line bot, you're able to `send messages, stickers and images` with it.
+*LineAPI4J* allows you to build your own line bot, and you're able to `send messages, stickers and images` with it.
 
 Inspired by [LINE](https://github.com/carpedm20/line), LINE API written in Python by [carpedm20](https://github.com/carpedm20).
 
-#### How to build
+Major part of structure of this implementation is from [LINE](https://github.com/carpedm20/line), all the credits goes to him :)
+
+### How to build
 
     mvn package
 
@@ -36,7 +39,7 @@ $ git clone git://github.com/cslinmiso/LineAPI4J.git
         e.printStackTrace();
       }
 ```
-Once you have LineContact, you can start from there.
+Once you have LineContact, you can start from there. Check `LineContact` for more information.
 
 see example App.java in io.cslinmiso.line.LineAPI4J
 

@@ -115,6 +115,8 @@ public interface LineApi {
 
   LoginResult loginWithVerifier(String verifier) throws Exception;
 
+  boolean updateAuthToken() throws Exception;
+  
   /*
    * (non-Javadoc)
    * 

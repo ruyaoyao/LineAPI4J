@@ -3,12 +3,12 @@
  * @Package: io.cslinmiso.line.model
  * @FileName: Utility.java
  * @author: treylin
- * @date: 2014/11/24, 下午 03:14:20
+ * @date: 2016/03/28, 下午 12:14:20
  * 
  * <pre>
  * The MIT License (MIT)
  *
- * Copyright (c) 2014 Trey Lin
+ * Copyright (c) 2016 Trey Lin
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -249,8 +249,8 @@ public class Utility {
     BufferedReader br = null;
     try {
       br =
-          new BufferedReader(new BufferedReader(new InputStreamReader(
-              new FileInputStream(fileName), "UTF-8")));
+          new BufferedReader(new InputStreamReader(
+              new FileInputStream(fileName), "UTF-8"));
       String in = null;
       while ((in = br.readLine()) != null) {
         rst.add(in);

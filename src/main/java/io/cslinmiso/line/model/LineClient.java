@@ -73,7 +73,7 @@ public class LineClient {
   List<LineGroup> groups;
 
   private LineClient() {
-//    throw new Exception("Please initialize LineClient with LineAPI.");
+    // throw new Exception("Please initialize LineClient with LineAPI.");
   }
 
   public LineClient(String id, String password) throws Exception {
@@ -474,17 +474,26 @@ public class LineClient {
     return false;
 
   }
-
+  
+  /**
+   * Send a message
+   * 
+   * :param message: LineMessage instance to send
+   */
   public Message sendMessage(int seq, LineMessage message) throws TalkException, TException,
       Exception {
-    /**
-     * Send a message
-     * 
-     * :param message: LineMessage instance to send
-     */
     if (checkAuth()) {
       // seq = 0;
-      return this.api.sendMessage(seq, message);
+      try {
+        return this.api.sendMessage(seq, message);
+      } catch (TalkException e) {
+        this.api.updateAuthToken();
+        try {
+          return this.api.sendMessage(seq, message);
+        } catch (Exception ex) {
+          throw ex;
+        }
+      }
     }
     return null;
 
@@ -497,7 +506,6 @@ public class LineClient {
      * :param id: `contact` id or `group` id or `room` id
      */
     if (checkAuth()) {
-
       TMessageBoxWrapUp messageBoxWrapUp = this.api.getMessageBoxCompactWrapUp(id);
 
       return messageBoxWrapUp.getMessageBox();
@@ -669,8 +677,7 @@ public class LineClient {
     if (this._authToken != null) {
       return true;
     } else {
-      String msg = "you need to login";
-      throw new Exception(msg);
+      throw new Exception("you need to login");
     }
   }
 

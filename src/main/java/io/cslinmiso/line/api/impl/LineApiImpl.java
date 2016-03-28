@@ -41,6 +41,7 @@ import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,14 +83,24 @@ public class LineApiImpl implements LineApi {
 
   private static final String EMAIL_REGEX = "[^@]+@[^@]+\\.[^@]+";
 
+  private static final String CERT_FILE = "./line.crt";
+
   /** The ip. */
-  private String ip = "192.168.11.123";
+  private String ip = "127.0.0.1";
 
   /** The version. */
-  private String version = "3.7.3.82";
+  private String version = "3.7.4";
 
   /** The com_name. */
   private String systemName = "Line4J";
+
+  private String id;
+
+  private String password;
+
+  private String authToken;
+
+  private String verifier;
 
   private String certificate;
 
@@ -173,7 +184,7 @@ public class LineApiImpl implements LineApi {
     IdentityProvider provider = null;
     Map<String, String> json = null;
     String sessionKey = null;
-    boolean keepLoggedIn = false;
+    boolean keepLoggedIn = true;
     String accessLocation = this.ip;
 
     // Login to LINE server.
@@ -185,8 +196,27 @@ public class LineApiImpl implements LineApi {
       json = getCertResult(LINE_SESSION_NAVER_URL);
     }
 
-    if (certificate != null) {
+    if (id != null) {
+      this.id = id;
+    }
+
+    if (password != null) {
+      this.password = password;
+    }
+
+    if (StringUtils.isNotEmpty(certificate)) {
       setCertificate(certificate);
+    }else{
+      // read the certificate file if it exists
+      try {
+        List<String> readFile = Utility.readFile(LineApiImpl.CERT_FILE);
+        String tmpCert = readFile != null ? readFile.get(0) : "";
+        if (tmpCert != null) {
+          setCertificate(tmpCert);
+        }
+      } catch (Exception ex) {
+        setCertificate("");
+      }
     }
 
     sessionKey = json.get("session_key");
@@ -205,36 +235,33 @@ public class LineApiImpl implements LineApi {
     KeyFactory keyFactory = KeyFactory.getInstance("RSA");
     RSAPublicKeySpec pubKeySpec = new RSAPublicKeySpec(modulus, pubExp);
     RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(pubKeySpec);
-    // not sure if it's correct instance...
     Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     cipher.init(Cipher.ENCRYPT_MODE, publicKey);
     byte[] enBytes = cipher.doFinal(message.getBytes());
     String encryptString = Hex.encodeHexString(enBytes);
-    certificate = encryptString;
-    // couldn't pass auth.
 
     THttpClient transport = new THttpClient(LINE_HTTP_URL);
     transport.setCustomHeaders(_headers);
     transport.open();
 
     TProtocol protocol = new TCompactProtocol(transport);
-
     this._client = new TalkService.Client(protocol);
 
     LoginResult result =
         this._client.loginWithIdentityCredentialForCertificate(provider, keyName, encryptString,
-            keepLoggedIn, accessLocation, this.systemName, certificate);
+            keepLoggedIn, accessLocation, this.systemName, this.certificate);
 
-    _headers.put("X-Line-Access", result.getVerifier());
-    String pinCode = result.getPinCode();
+    if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM) {
 
-    if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM && pinCode != null) {
+      _headers.put("X-Line-Access", result.getVerifier());
+      String pinCode = result.getPinCode();
+
       System.out.printf("Enter PinCode '%s' to your mobile phone in 2 minutes.\n", pinCode);
       // await for pinCode to be certified, it will return a verifier afterward.
       loginWithVerifierForCertificate();
     } else if (result.getType() == LoginResultType.SUCCESS) {
       // if param certificate has passed certification
-      _headers.put("X-Line-Access", result.getAuthToken());
+      setAuthToken(result.getAuthToken());
     }
 
     // Once the client passed the verification, switch connection to HTTP_IN_URL
@@ -250,7 +277,7 @@ public class LineApiImpl implements LineApi {
    */
   public void loginWithAuthToken(String authToken) throws Exception {
     if (StringUtils.isNotEmpty(authToken)) {
-      _headers.put("X-Line-Access", authToken);
+      setAuthToken(authToken);
     }
     THttpClient transport = new THttpClient(LINE_HTTP_URL);
     transport.setCustomHeaders(_headers);
@@ -288,7 +315,7 @@ public class LineApiImpl implements LineApi {
 
     if (result.getType() == LoginResultType.SUCCESS) {
       // this.certificate = msg.certificate
-      _headers.put("X-Line-Access", result.getAuthToken());
+      setAuthToken(result.getAuthToken());
       setCertificate(result.getCertificate());
       return result;
     } else if (result.getType() == LoginResultType.REQUIRE_QRCODE) {
@@ -343,14 +370,17 @@ public class LineApiImpl implements LineApi {
     // login with verifier
     json = (Map) json.get("result");
     String verifier = (String) json.get("verifier");
-
+    this.verifier = verifier;
     LoginResult result = this._client.loginWithVerifierForCertificate(verifier);
 
     if (result.getType() == LoginResultType.SUCCESS) {
-      // this.certificate = msg.certificate
-      _headers.put("X-Line-Access", result.getAuthToken());
-      setCertificate(result.getCertificate());
-      return result.getCertificate();
+      setAuthToken(result.getAuthToken());
+      String tmpCert = result.getCertificate();
+      if (tmpCert != null) {
+        Utility.writeFile(IOUtils.toInputStream(tmpCert), this.CERT_FILE);
+        setCertificate(tmpCert);
+      }
+      return tmpCert;
     } else if (result.getType() == LoginResultType.REQUIRE_QRCODE) {
       throw new Exception("require QR code");
     } else {
@@ -370,9 +400,24 @@ public class LineApiImpl implements LineApi {
     Unirest unirest = new Unirest();
     byte[] byteArray = IOUtils.toByteArray(is);
     HttpResponse<JsonNode> jsonResponse =
-        unirest.post(url).headers(this._headers).fields(data)
-            .field("file", byteArray, "").asJson();
+        unirest.post(url).headers(this._headers).fields(data).field("file", byteArray, "").asJson();
     return jsonResponse.getStatus() == 201;
+  }
+
+  /**
+   * 
+   * After login, update authToken to avoid expiration of authToken. This method skip the PinCode
+   * validation step.
+   * 
+   **/
+  public boolean updateAuthToken() throws Exception {
+    if (this.certificate != null) {
+      this.login(this.id, this.password);
+      this.loginWithAuthToken(this.authToken);
+      return true;
+    } else {
+      throw new Exception("You need to login first. There is no valid certificate");
+    }
   }
 
   /**
@@ -563,6 +608,11 @@ public class LineApiImpl implements LineApi {
     } catch (Exception e) {
       throw new Exception(e.getMessage());
     }
+  }
+
+  private void setAuthToken(String token) {
+    _headers.put("X-Line-Access", token);
+    this.authToken = token;
   }
 
   public TalkService.Client getClient() {
