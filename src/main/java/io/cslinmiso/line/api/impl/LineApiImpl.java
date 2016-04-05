@@ -103,13 +103,13 @@ public class LineApiImpl implements LineApi {
   private String certificate;
 
   /** The revision. */
-  private long revision = 0;
+  private long revision;
 
   /** The _headers. */
-  private Map<String, String> _headers = new HashMap<String, String>();
+  private Map<String, String> headers = new HashMap<String, String>();
 
   /** The _client. */
-  public TalkService.Client _client = null;
+  public TalkService.Client client;
 
   public LineApiImpl() {
     initHeaders("");
@@ -152,8 +152,8 @@ public class LineApiImpl implements LineApi {
       this.systemName = systemName;
     }
 
-    _headers.put("User-Agent", userAgent);
-    _headers.put("X-Line-Application", app);
+    headers.put("User-Agent", userAgent);
+    headers.put("X-Line-Application", app);
   }
 
   /**
@@ -165,7 +165,7 @@ public class LineApiImpl implements LineApi {
   public Client ready() throws TTransportException {
 
     THttpClient transport = new THttpClient(LINE_HTTP_IN_URL);
-    transport.setCustomHeaders(_headers);
+    transport.setCustomHeaders(headers);
     transport.open();
 
     TProtocol protocol = new TCompactProtocol(transport);
@@ -239,19 +239,19 @@ public class LineApiImpl implements LineApi {
     String encryptString = Hex.encodeHexString(enBytes);
 
     THttpClient transport = new THttpClient(LINE_HTTP_URL);
-    transport.setCustomHeaders(_headers);
+    transport.setCustomHeaders(headers);
     transport.open();
 
     TProtocol protocol = new TCompactProtocol(transport);
-    this._client = new TalkService.Client(protocol);
+    this.client = new TalkService.Client(protocol);
 
     LoginResult result =
-        this._client.loginWithIdentityCredentialForCertificate(provider, keyName, encryptString,
+        this.client.loginWithIdentityCredentialForCertificate(provider, keyName, encryptString,
             keepLoggedIn, accessLocation, this.systemName, this.certificate);
 
     if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM) {
 
-      _headers.put("X-Line-Access", result.getVerifier());
+      headers.put("X-Line-Access", result.getVerifier());
       String pinCode = result.getPinCode();
 
       System.out.printf("Enter PinCode '%s' to your mobile phone in 2 minutes.\n", pinCode);
@@ -263,7 +263,7 @@ public class LineApiImpl implements LineApi {
     }
 
     // Once the client passed the verification, switch connection to HTTP_IN_URL
-    this._client = ready();
+    this.client = ready();
     return result;
   }
 
@@ -277,7 +277,7 @@ public class LineApiImpl implements LineApi {
       setAuthToken(authToken);
     }
     THttpClient transport = new THttpClient(LINE_HTTP_URL);
-    transport.setCustomHeaders(_headers);
+    transport.setCustomHeaders(headers);
     transport.open();
 
     TProtocol protocol = new TCompactProtocol(transport);
@@ -296,16 +296,16 @@ public class LineApiImpl implements LineApi {
     boolean keepLoggedIn = false;
 
     THttpClient transport = new THttpClient(LINE_HTTP_URL);
-    transport.setCustomHeaders(_headers);
+    transport.setCustomHeaders(headers);
     transport.open();
 
     TProtocol protocol = new TCompactProtocol(transport);
 
-    this._client = new TalkService.Client(protocol);
+    this.client = new TalkService.Client(protocol);
 
-    AuthQrcode result = this._client.getAuthQrcode(keepLoggedIn, systemName);
+    AuthQrcode result = this.client.getAuthQrcode(keepLoggedIn, systemName);
 
-    _headers.put("X-Line-Access", result.getVerifier());
+    headers.put("X-Line-Access", result.getVerifier());
 
     System.out.println("Retrieved QR Code.");
 
@@ -330,7 +330,7 @@ public class LineApiImpl implements LineApi {
     json = (Map) json.get("result");
     String verifier = (String) json.get("verifier");
     this.verifier = verifier;
-    LoginResult result = this._client.loginWithVerifierForCertificate(verifier);
+    LoginResult result = this.client.loginWithVerifierForCertificate(verifier);
 
     if (result.getType() == LoginResultType.SUCCESS) {
       setAuthToken(result.getAuthToken());
@@ -351,7 +351,7 @@ public class LineApiImpl implements LineApi {
     Unirest unirest = new Unirest();
     // set timed out in 2 mins.
     Unirest.setTimeouts(120000, 120000);
-    HttpResponse<JsonNode> jsonResponse = unirest.get(url).headers(this._headers).asJson();
+    HttpResponse<JsonNode> jsonResponse = unirest.get(url).headers(this.headers).asJson();
     return Utility.toMap(jsonResponse.getBody().getObject());
   }
 
@@ -359,7 +359,7 @@ public class LineApiImpl implements LineApi {
     Unirest unirest = new Unirest();
     byte[] byteArray = IOUtils.toByteArray(is);
     HttpResponse<JsonNode> jsonResponse =
-        unirest.post(url).headers(this._headers).fields(data).field("file", byteArray, "").asJson();
+        unirest.post(url).headers(this.headers).fields(data).field("file", byteArray, "").asJson();
     return jsonResponse.getStatus() == 201;
   }
 
@@ -388,7 +388,7 @@ public class LineApiImpl implements LineApi {
    **/
   public Contact findContactByUserid(String userid)
       throws TalkException, TException {
-    return this._client.findContactByUserid(userid);
+    return this.client.findContactByUserid(userid);
   }
   
   /**
@@ -400,7 +400,7 @@ public class LineApiImpl implements LineApi {
    **/
   public Map<String, Contact> findAndAddContactsByUserid(int reqSeq, String userid)
       throws TalkException, TException {
-    return this._client.findAndAddContactsByUserid(0, userid);
+    return this.client.findAndAddContactsByUserid(0, userid);
   }
   
   /**
@@ -412,7 +412,7 @@ public class LineApiImpl implements LineApi {
    **/
   public Map<String, Contact> findContactsByEmail(Set<String> emails)
       throws TalkException, TException {
-    return this._client.findContactsByEmail(emails);
+    return this.client.findContactsByEmail(emails);
   }
   
   /**
@@ -424,7 +424,7 @@ public class LineApiImpl implements LineApi {
    **/
   public Map<String, Contact> findAndAddContactsByEmail(int reqSeq, Set<String> emails)
       throws TalkException, TException {
-    return this._client.findAndAddContactsByEmail(0, emails);
+    return this.client.findAndAddContactsByEmail(0, emails);
   }
 
   /**
@@ -437,7 +437,7 @@ public class LineApiImpl implements LineApi {
    **/
   public Map<String, Contact> findContactsByPhone( Set<String> phones)
       throws TalkException, TException {
-    return this._client.findContactsByPhone(phones);
+    return this.client.findContactsByPhone(phones);
   }
   
   /**
@@ -450,7 +450,7 @@ public class LineApiImpl implements LineApi {
    **/
   public Map<String, Contact> findAndAddContactsByPhone(int reqSeq, Set<String> phones)
       throws TalkException, TException {
-    return this._client.findAndAddContactsByPhone(0, phones);
+    return this.client.findAndAddContactsByPhone(0, phones);
   }
 
   /**
@@ -461,22 +461,22 @@ public class LineApiImpl implements LineApi {
    * phoneticName - regionCode - allowSearchByEmail - email - statusMessage
    **/
   public Profile getProfile() throws TalkException, TException {
-    return this._client.getProfile();
+    return this.client.getProfile();
   }
 
   public List<String> getAllContactIds() throws TalkException, TException {
     /** Get all contacts of your LINE account **/
-    return this._client.getAllContactIds();
+    return this.client.getAllContactIds();
   }
 
   public List<String> getBlockedContactIds() throws TalkException, TException {
     /** Get all blocked contacts of your LINE account **/
-    return this._client.getBlockedContactIds();
+    return this.client.getBlockedContactIds();
   }
 
   public List<String> getHiddenContactIds() throws TalkException, TException {
     /** Get all hidden contacts of your LINE account **/
-    return this._client.getHiddenContactMids();
+    return this.client.getHiddenContactMids();
   }
 
   public List<Contact> getContacts(List<String> ids) throws TalkException, TException {
@@ -491,35 +491,35 @@ public class LineApiImpl implements LineApi {
     // if type(ids) != list{
     // msg = "argument should be list of contact ids"
 
-    return this._client.getContacts(ids);
+    return this.client.getContacts(ids);
   }
 
   public Room createRoom(int reqSeq, List<String> ids) throws TalkException, TException {
     /** Create a chat room **/
     // reqSeq = 0;
-    return this._client.createRoom(reqSeq, ids);
+    return this.client.createRoom(reqSeq, ids);
   }
 
   public Room getRoom(String roomId) throws TalkException, TException {
     /** Get a chat room **/
-    return this._client.getRoom(roomId);
+    return this.client.getRoom(roomId);
   }
 
   public void inviteIntoRoom(String roomId, List<String> contactIds) throws TalkException,
       TException {
     /** Invite contacts into room **/
-    this._client.inviteIntoRoom(0, roomId, contactIds);
+    this.client.inviteIntoRoom(0, roomId, contactIds);
   }
 
   public void leaveRoom(String id) throws TalkException, TException {
     /** Leave a chat room **/
-    this._client.leaveRoom(0, id);
+    this.client.leaveRoom(0, id);
   }
 
   public Group createGroup(int seq, String name, List<String> ids) throws TalkException, TException {
     /** Create a group **/
     // seq = 0;
-    return this._client.createGroup(seq, name, ids);
+    return this.client.createGroup(seq, name, ids);
   }
 
   public List<Group> getGroups(List<String> groupIds) throws TalkException, TException {
@@ -528,54 +528,54 @@ public class LineApiImpl implements LineApi {
     // msg = "argument should be list of group ids"
     // this.raise_error(msg)
 
-    return this._client.getGroups(groupIds);
+    return this.client.getGroups(groupIds);
   }
 
   public List<String> getGroupIdsJoined() throws TalkException, TException {
     /** Get group id that you joined **/
-    return this._client.getGroupIdsJoined();
+    return this.client.getGroupIdsJoined();
   }
 
   public List<String> getGroupIdsInvited() throws TalkException, TException {
     /** Get group id that you invited **/
-    return this._client.getGroupIdsInvited();
+    return this.client.getGroupIdsInvited();
   }
 
   public void acceptGroupInvitation(int seq, String groupId) throws TalkException, TException {
     /** Accept a group invitation **/
     // seq = 0;
-    this._client.acceptGroupInvitation(seq, groupId);
+    this.client.acceptGroupInvitation(seq, groupId);
   }
 
   public void cancelGroupInvitation(int seq, String groupId, List<String> contactIds)
       throws TalkException, TException {
     /** Cancel a group invitation **/
     // seq = 0;
-    this._client.cancelGroupInvitation(seq, groupId, contactIds);
+    this.client.cancelGroupInvitation(seq, groupId, contactIds);
   }
 
   public void inviteIntoGroup(int seq, String groupId, List<String> contactIds)
       throws TalkException, TException {
     /** Invite contacts into group **/
     // seq = 0;
-    this._client.inviteIntoGroup(seq, groupId, contactIds);
+    this.client.inviteIntoGroup(seq, groupId, contactIds);
   }
 
   public void kickoutFromGroup(int seq, String groupId, List<String> contactIds)
       throws TalkException, TException {
     /** Kick a group members **/
     // seq = 0;
-    this._client.kickoutFromGroup(seq, groupId, contactIds);
+    this.client.kickoutFromGroup(seq, groupId, contactIds);
   }
 
   public void leaveGroup(String id) throws TalkException, TException {
     /** Leave a group **/
-    this._client.leaveGroup(0, id);
+    this.client.leaveGroup(0, id);
   }
 
   public List<Message> getRecentMessages(String id, int count) throws TalkException, TException {
     /** Get recent messages from `id` **/
-    return this._client.getRecentMessages(id, count);
+    return this.client.getRecentMessages(id, count);
   }
 
   public Message sendMessage(int seq, Message message) throws TalkException, TException {
@@ -584,20 +584,20 @@ public class LineApiImpl implements LineApi {
      * 
      * param message: `message` instance
      **/
-    return this._client.sendMessage(seq, message);
+    return this.client.sendMessage(seq, message);
   }
 
   public long getLastOpRevision() throws TalkException, TException {
-    return this._client.getLastOpRevision();
+    return this.client.getLastOpRevision();
   }
 
   public List<Operation> fetchOperations(long revision, int count) throws TalkException, TException {
-    return this._client.fetchOperations(revision, count);
+    return this.client.fetchOperations(revision, count);
   }
 
   public TMessageBoxWrapUp getMessageBoxCompactWrapUp(String id) {
     try {
-      return this._client.getMessageBoxCompactWrapUp(id);
+      return this.client.getMessageBoxCompactWrapUp(id);
     } catch (Exception e) {
       return null;
     }
@@ -606,27 +606,27 @@ public class LineApiImpl implements LineApi {
   public TMessageBoxWrapUpResponse getMessageBoxCompactWrapUpList(int start, int count)
       throws Exception {
     try {
-      return this._client.getMessageBoxCompactWrapUpList(start, count);
+      return this.client.getMessageBoxCompactWrapUpList(start, count);
     } catch (Exception e) {
       throw new Exception(e.getMessage());
     }
   }
 
   private void setAuthToken(String token) {
-    _headers.put("X-Line-Access", token);
+    headers.put("X-Line-Access", token);
     this.authToken = token;
   }
 
   public TalkService.Client getClient() {
-    return _client;
+    return client;
   }
 
-  public void setClient(TalkService.Client _client) {
-    this._client = _client;
+  public void setClient(TalkService.Client client) {
+    this.client = client;
   }
 
   public String getLineAccessToken() {
-    return _headers.get("X-Line-Access");
+    return headers.get("X-Line-Access");
   }
 
   public String getCertificate() {

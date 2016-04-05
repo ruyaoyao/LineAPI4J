@@ -41,7 +41,7 @@ import line.thrift.Message;
 public class LineMessage extends Message{
 
   private static final long serialVersionUID = 8788970788991926078L;
-  private Message _message;
+  private Message message;
   public LineBase sender;
   public LineBase receiver;
 
@@ -91,11 +91,11 @@ public class LineMessage extends Message{
   }
 
   public Message getMessage() {
-    return _message;
+    return message;
   }
 
-  public void setMessage(Message _message) {
-    this._message = _message;
+  public void setMessage(Message message) {
+    this.message = message;
   }
   
   

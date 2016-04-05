@@ -65,7 +65,7 @@ public abstract class LineBase {
   public String id;
 
   /** The _client. */
-  public LineClient _client;
+  public LineClient client;
 
   // _messageBox = null;
 
@@ -88,7 +88,7 @@ public abstract class LineBase {
     LineMessage message = new LineMessage();
     message.setTo(getId());
     message.setText(text);
-    _client.sendMessage(0, message);
+    client.sendMessage(0, message);
 
     return true;
 
@@ -135,7 +135,7 @@ public abstract class LineBase {
     metaData.put("STKTXT", stickerText);
     message.setContentMetadata(metaData);
 
-    _client.sendMessage(0, message);
+    client.sendMessage(0, message);
 
     return true;
   }
@@ -164,16 +164,16 @@ public abstract class LineBase {
    * @return the client
    */
   public LineClient getClient() {
-    return _client;
+    return client;
   }
 
   /**
    * Sets the client.
    * 
-   * @param _client the new client
+   * @param client the new client
    */
-  public void setClient(LineClient _client) {
-    this._client = _client;
+  public void setClient(LineClient client) {
+    this.client = client;
   }
 
   /**
@@ -212,7 +212,7 @@ public abstract class LineBase {
       message.setText("");
       message.setContentType(ContentType.IMAGE);
 
-      Message sendMessage = _client.sendMessage(0, message);
+      Message sendMessage = client.sendMessage(0, message);
       String messageId = sendMessage.getId();
 
       // preparing params which is detail of image to upload server
@@ -229,7 +229,7 @@ public abstract class LineBase {
       data.put("params", objectMapper.writeValueAsString(objectNode));
 
       String url = LineApi.LINE_UPLOADING_URL;
-      LineApiImpl api = (LineApiImpl) _client.getApi();
+      LineApiImpl api = (LineApiImpl) client.getApi();
       boolean isUploaded = api.postContent(url, data, is);
 
       if (isUploaded == false) {
@@ -329,7 +329,7 @@ public abstract class LineBase {
       contentMetadata.put("FILE_SIZE", fileSize);
       message.setContentMetadata(contentMetadata);
 
-      Message sendMessage = _client.sendMessage(0, message);
+      Message sendMessage = client.sendMessage(0, message);
       String messageId = sendMessage.getId();
 
       // preparing params which is detail of image to upload server
@@ -345,7 +345,7 @@ public abstract class LineBase {
       data.put("params", objectMapper.writeValueAsString(objectNode));
 
       String url = LineApi.LINE_UPLOADING_URL;
-      LineApiImpl api = (LineApiImpl) _client.getApi();
+      LineApiImpl api = (LineApiImpl) client.getApi();
       boolean isUploaded = api.postContent(url, data, is);
 
       if (isUploaded == false) {
@@ -388,9 +388,9 @@ public abstract class LineBase {
     List<LineMessage> msgList = null;
 
     try {
-      messageBox = _client.getMessageBox(getId());
+      messageBox = client.getMessageBox(getId());
       if (messageBox != null) {
-        msgList = _client.getRecentMessages(messageBox, count);
+        msgList = client.getRecentMessages(messageBox, count);
       }
     } catch (Exception e) {
       throw e;

@@ -66,10 +66,10 @@ import org.apache.thrift.transport.TTransportException;
 public class LineClient {
 
   LineApi api;
-  String _authToken;
+  String authToken;
   String certificate;
   /** The revision. */
-  public long revision = 0;
+  public long revision;
 
   Profile profile;
   List<LineContact> contacts;
@@ -152,8 +152,8 @@ public class LineClient {
       Contact thatContact = contactMap.get(0);
 
       for (LineContact tmpContact : this.contacts) {
-        Contact _contact = tmpContact.getContact();
-        if (_contact.equals(thatContact)) {
+        Contact contact = tmpContact.getContact();
+        if (contact.equals(thatContact)) {
           throw new Exception(String.format("%s already exists.", thatContact.getDisplayName()));
         }
       }
@@ -672,18 +672,18 @@ public class LineClient {
           }
 
           String id = null;
-          String raw_mid = getProfile().getMid();
-          String raw_sender = operation.getMessage().getFrom();
-          String raw_receiver = operation.getMessage().getTo();
+          String rawMid = getProfile().getMid();
+          String rawSender = operation.getMessage().getFrom();
+          String rawReceiver = operation.getMessage().getTo();
 
           // id = 實際發送者, whom sent the message
-          id = raw_receiver;
-          if (raw_receiver.equals(raw_mid)) {
-            id = raw_sender;
+          id = rawReceiver;
+          if (rawReceiver.equals(rawMid)) {
+            id = rawSender;
           }
 
-          LineBase sender = this.getContactOrRoomOrGroupById(raw_sender);
-          LineBase receiver = this.getContactOrRoomOrGroupById(raw_receiver);
+          LineBase sender = this.getContactOrRoomOrGroupById(rawSender);
+          LineBase receiver = this.getContactOrRoomOrGroupById(rawReceiver);
 
           // If sender is not found, check member list of group chat sent to
           if (sender == null && (receiver instanceof LineGroup || receiver instanceof LineRoom)) {
@@ -692,7 +692,7 @@ public class LineClient {
                 // If sender is not found, check member list of room chat sent to
                     : ((LineGroup) receiver).getMembers();
             for (LineContact contact : contacts) {
-              if (contact.getId().equals(raw_sender)) {
+              if (contact.getId().equals(rawSender)) {
                 sender = contact;
                 break;
               }
@@ -704,13 +704,13 @@ public class LineClient {
             this.refreshContacts();
             this.refreshActiveRooms();
 
-            sender = this.getContactOrRoomOrGroupById(raw_sender);
-            receiver = this.getContactOrRoomOrGroupById(raw_receiver);
+            sender = this.getContactOrRoomOrGroupById(rawSender);
+            receiver = this.getContactOrRoomOrGroupById(rawReceiver);
           }
 
           if (sender == null || receiver == null) {
             List<Contact> contacts =
-                this.getApi().getContacts(Arrays.asList(new String[] {raw_sender, raw_sender}));
+                this.getApi().getContacts(Arrays.asList(new String[] {rawSender, rawSender}));
             if (contacts != null && contacts.size() == 2) {
               sender = new LineContact(this, contacts.get(0));
               receiver = new LineContact(this, contacts.get(1));
@@ -760,7 +760,7 @@ public class LineClient {
 
   public boolean checkAuth() throws Exception {
     /** Check if client is logged in or not **/
-    if (this._authToken != null) {
+    if (this.authToken!= null) {
       return true;
     } else {
       throw new Exception("you need to login");
@@ -776,11 +776,11 @@ public class LineClient {
   }
 
   public String getAuthToken() {
-    return _authToken;
+    return authToken;
   }
 
-  public void setAuthToken(String _authToken) {
-    this._authToken = _authToken;
+  public void setAuthToken(String authtoken) {
+    this.authToken = authtoken;
   }
 
   public long getRevision() {
