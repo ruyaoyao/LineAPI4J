@@ -49,7 +49,7 @@ public class LineRoom extends LineBase {
    * Attributes: contacts Contact list of chat room
    **/
 
-  Room _room;
+  Room room;
   List<LineContact> contacts;
 
   public LineRoom() {}
@@ -75,7 +75,7 @@ public class LineRoom extends LineBase {
 
   public boolean leave() throws TalkException, TException, Exception {
     /** Leave room */
-    return this._client.leaveRoom(this);
+    return this.client.leaveRoom(this);
   }
 
   public void invite(LineContact contact) throws TalkException, TException, Exception {
@@ -84,7 +84,7 @@ public class LineRoom extends LineBase {
      */
     List<LineContact> temp = new ArrayList<LineContact>();
     temp.add(contact);
-    this._client.inviteIntoRoom(this, temp);
+    this.client.inviteIntoRoom(this, temp);
   }
 
 
@@ -101,11 +101,11 @@ public class LineRoom extends LineBase {
   }
 
   public Room getRoom() {
-    return _room;
+    return room;
   }
 
   public void setRoom(Room room) {
-    this._room = room;
+    this.room = room;
   }
 
   public List<LineContact> getContacts() {

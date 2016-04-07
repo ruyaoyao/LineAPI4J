@@ -51,7 +51,7 @@ public class LineContact extends LineBase {
    * statusMessage status message of contact.
    */
 
-  Contact _contact;
+  Contact contact;
   
   /** The name. */
   String name;
@@ -107,16 +107,16 @@ public class LineContact extends LineBase {
    * @return the contact
    */
   public Contact getContact() {
-    return _contact;
+    return contact;
   }
 
   /**
    * Sets the contact.
    * 
-   * @param _contact the new contact
+   * @param contact the new contact
    */
-  public void setContact(Contact _contact) {
-    this._contact = _contact;
+  public void setContact(Contact contact) {
+    this.contact = contact;
   }
 
   /**
@@ -166,7 +166,7 @@ public class LineContact extends LineBase {
       rooms = new ArrayList<LineRoom>();
     }
 
-    for (LineRoom room : this._client.rooms) {
+    for (LineRoom room : this.client.rooms) {
       if (room.containsId(this.getId())) {
         rooms.add(room);
       }
@@ -194,7 +194,7 @@ public class LineContact extends LineBase {
       groups = new ArrayList<LineGroup>();
     }
 
-    for (LineGroup group : this._client.groups) {
+    for (LineGroup group : this.client.groups) {
       if (group.containsMemberId(this.getId())) {
         this.groups.add(group);
       }
@@ -212,78 +212,78 @@ public class LineContact extends LineBase {
   }
 
   public long getCreatedTime() {
-    return this._contact.createdTime;
+    return this.contact.createdTime;
   }
 
   public line.thrift.ContactType getType() {
-    return this._contact.type;
+    return this.contact.type;
   }
 
   public line.thrift.ContactStatus getStatus() {
-    return this._contact.status;
+    return this.contact.status;
   }
 
   public line.thrift.ContactRelation getRelation() {
-    return this._contact.relation;
+    return this.contact.relation;
   }
 
   public java.lang.String getDisplayName() {
-    return this._contact.displayName;
+    return this.contact.displayName;
   }
 
   public java.lang.String getPhoneticName() {
-    return this._contact.phoneticName;
+    return this.contact.phoneticName;
   }
 
   public java.lang.String getPictureStatus() {
-    return this._contact.pictureStatus;
+    return this.contact.pictureStatus;
   }
 
   public java.lang.String getThumbnailUrl() {
-    return this._contact.thumbnailUrl;
+    return this.contact.thumbnailUrl;
   }
 
   public java.lang.String getDisplayNameOverridden() {
-    return this._contact.displayNameOverridden;
+    return this.contact.displayNameOverridden;
   }
 
   public long getFavoriteTime() {
-    return this._contact.favoriteTime;
+    return this.contact.favoriteTime;
   }
 
   public boolean isCapableVoiceCall() {
-    return this._contact.capableVoiceCall;
+    return this.contact.capableVoiceCall;
   }
 
   public boolean isCapableVideoCall() {
-    return this._contact.capableVideoCall;
+    return this.contact.capableVideoCall;
   }
 
   public boolean isCapableMyhome() {
-    return this._contact.capableMyhome;
+    return this.contact.capableMyhome;
   }
 
   public boolean isCapableBuddy() {
-    return this._contact.capableBuddy;
+    return this.contact.capableBuddy;
   }
 
   public int getAttributes() {
-    return this._contact.attributes;
+    return this.contact.attributes;
   }
 
   public long getSettings() {
-    return this._contact.settings;
+    return this.contact.settings;
   }
 
   public String getPicturePath() {
-    return LineApi.LINE_PROFILE_URL + this._contact.picturePath;
+    return LineApi.LINE_PROFILE_URL + this.contact.picturePath;
   }
 
   @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
-    result = prime * result + ((_contact == null) ? 0 : _contact.hashCode());
+    result = prime * result + ((contact== null) ? 0 : contact.hashCode());
     return result;
   }
 
@@ -293,9 +293,9 @@ public class LineContact extends LineBase {
     if (obj == null) return false;
     if (getClass() != obj.getClass()) return false;
     LineContact other = (LineContact) obj;
-    if (_contact == null) {
-      if (other._contact != null) return false;
-    } else if (!_contact.getMid().equals(other._contact.getMid())) return false;
+    if (contact == null) {
+      if (other.contact != null) return false;
+    } else if (!contact.getMid().equals(other.contact.getMid())) return false;
     return true;
   }
 

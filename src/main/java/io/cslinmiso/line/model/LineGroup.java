@@ -48,11 +48,11 @@ public class LineGroup extends LineBase {
    * >>> group = LineGroup(client, client.groups[0])
    */
 
-  Group _group = null;
-  String name = null;
+  Group group;
+  String name;
   boolean isJoined = true;
 
-  LineContact creator = null;
+  LineContact creator;
   List<LineContact> members = new ArrayList<LineContact>();
   List<LineContact> invitee = new ArrayList<LineContact>();
 
@@ -95,7 +95,7 @@ public class LineGroup extends LineBase {
 
   public boolean acceptGroupInvitation() throws Exception {
     if (isJoined() == false) {
-      this._client.acceptGroupInvitation(this);
+      this.client.acceptGroupInvitation(this);
       return true;
     } else {
       throw new Exception("You are already in group.");
@@ -106,7 +106,7 @@ public class LineGroup extends LineBase {
     /** Leave group **/
     if (isJoined()) {
       try {
-        return this._client.leaveGroup(this);
+        return this.client.leaveGroup(this);
       } catch (Exception e) {
         return false;
       }
@@ -147,11 +147,11 @@ public class LineGroup extends LineBase {
   } 
   
   public Group getGroup() {
-    return _group;
+    return group;
   }
 
-  public void setGroup(Group _group) {
-    this._group = _group;
+  public void setGroup(Group group) {
+    this.group = group;
   }
 
   public String getName() {
