@@ -83,6 +83,8 @@ public class LineApiImpl implements LineApi {
 
   private static final String CERT_FILE = "./line.crt";
 
+  private static final String X_LINE_ACCESS = "X-Line-Access";
+
   /** The ip. */
   private String ip = "127.0.0.1";
 
@@ -251,7 +253,7 @@ public class LineApiImpl implements LineApi {
 
     if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM) {
 
-      headers.put("X-Line-Access", result.getVerifier());
+      headers.put(X_LINE_ACCESS, result.getVerifier());
       String pinCode = result.getPinCode();
 
       System.out.printf("Enter PinCode '%s' to your mobile phone in 2 minutes.\n", pinCode);
@@ -305,7 +307,7 @@ public class LineApiImpl implements LineApi {
 
     AuthQrcode result = this.client.getAuthQrcode(keepLoggedIn, systemName);
 
-    headers.put("X-Line-Access", result.getVerifier());
+    headers.put(X_LINE_ACCESS, result.getVerifier());
 
     System.out.println("Retrieved QR Code.");
 
@@ -328,9 +330,9 @@ public class LineApiImpl implements LineApi {
 
     // login with verifier
     json = (Map) json.get("result");
-    String verifier = (String) json.get("verifier");
-    this.verifier = verifier;
-    LoginResult result = this.client.loginWithVerifierForCertificate(verifier);
+    String verifierLocal = (String) json.get("verifier");
+    this.verifier = verifierLocal;
+    LoginResult result = this.client.loginWithVerifierForCertificate(verifierLocal);
 
     if (result.getType() == LoginResultType.SUCCESS) {
       setAuthToken(result.getAuthToken());
@@ -613,7 +615,7 @@ public class LineApiImpl implements LineApi {
   }
 
   private void setAuthToken(String token) {
-    headers.put("X-Line-Access", token);
+    headers.put(X_LINE_ACCESS, token);
     this.authToken = token;
   }
 
@@ -626,7 +628,7 @@ public class LineApiImpl implements LineApi {
   }
 
   public String getLineAccessToken() {
-    return headers.get("X-Line-Access");
+    return headers.get(X_LINE_ACCESS);
   }
 
   public String getCertificate() {
