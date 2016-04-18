@@ -710,7 +710,7 @@ public class LineClient {
 
           if (sender == null || receiver == null) {
             List<Contact> contacts =
-                this.getApi().getContacts(Arrays.asList(new String[] {rawSender, rawSender}));
+                this.getApi().getContacts(Arrays.asList(new String[] {rawSender, rawReceiver}));
             if (contacts != null && contacts.size() == 2) {
               sender = new LineContact(this, contacts.get(0));
               receiver = new LineContact(this, contacts.get(1));
