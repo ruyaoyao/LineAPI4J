@@ -277,8 +277,6 @@ public class LineClient {
     // Refresh groups of LineClient
     // Refresh active chat rooms
     if (checkAuth()) {
-      int start = 1;
-      int count = 50;
 
       this.groups = new ArrayList<LineGroup>();
       List<String> groupIdsJoined = this.api.getGroupIdsJoined();
@@ -671,7 +669,7 @@ public class LineClient {
             continue;
           }
 
-          String id = null;
+          String id;
           String rawMid = getProfile().getMid();
           String rawSender = operation.getMessage().getFrom();
           String rawReceiver = operation.getMessage().getTo();
