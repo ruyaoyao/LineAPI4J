@@ -125,3 +125,7 @@ Trey Lin
 [Site](http://cslinmiso.github.io/)
 
 [@cslinmiso](https://twitter.com/cslinmiso)
+
+Reference
+========
+[LINE(라인) protocol analysis](http://goo.gl/Q2sNcJ)
