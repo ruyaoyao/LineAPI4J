@@ -1,6 +1,7 @@
 LineAPI4J 
 =========
 
+*June 23rd, 2016* `It appeared that LINE has been updated their service and the application which blocking old version from reading message text from longpoll message. If you encounter similar problem, please do pull my latest commit.`
 *March 28th, 2016* `Now, you can keep the log session alive, doesn't have to repeat entering pincode.`
 
 *LineAPI4J* is a library written in Java with compressed thrift client.
