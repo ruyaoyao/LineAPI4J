@@ -86,8 +86,8 @@ public class LineApiImpl implements LineApi {
   /** The ip. */
   private String ip = "127.0.0.1";
 
-  /** The version. */
-  private String version = "4.0.1";
+  /** The line application version. */
+  private String version = "4.7.0";
 
   /** The com_name. */
   private String systemName = "Line4J";
