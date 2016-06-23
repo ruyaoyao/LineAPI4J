@@ -8,7 +8,7 @@ LineAPI4J
 
 *LineAPI4J* is a library written in Java with compressed thrift client.
 
-You might wonder what do you need it, when you already have LINE client installed on your PC/MAC/Mobile devices.
+You might wonder why do you need it, when you already have LINE client installed on your PC/MAC/Mobile devices.
 
 *LineAPI4J* allows you to build your own line bot, and you're able to `send messages, stickers, files and images` with it.
 
