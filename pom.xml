@@ -15,6 +15,14 @@
 	</properties>
 
 	<dependencies>
+		<dependencies>
+		<dependency>
+			<groupId>line.thrift.</groupId>
+			<artifactId>thrift-line-talkservice</artifactId>
+			<version>1.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/thrift-line-talkservice.jar</systemPath>
+		</dependency>
 		<dependency>
 			<groupId>org.apache.thrift</groupId>
 			<artifactId>libthrift</artifactId>
