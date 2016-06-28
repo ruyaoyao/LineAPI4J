@@ -15,7 +15,6 @@
 	</properties>
 
 	<dependencies>
-		<dependencies>
 		<dependency>
 			<groupId>line.thrift.</groupId>
 			<artifactId>thrift-line-talkservice</artifactId>
