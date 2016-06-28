@@ -135,9 +135,9 @@ public class LineApiImpl implements LineApi {
   }
 
   private void initHeaders(String systemName) {
-    String osVersion = null;
-    String userAgent = null;
-    String app = null;
+    String osVersion;
+    String userAgent;
+    String app;
     boolean isMac = true;
 
     if (isMac) {
@@ -181,9 +181,9 @@ public class LineApiImpl implements LineApi {
 
   public LoginResult login(String id, String password, String certificate) throws Exception {
 
-    IdentityProvider provider = null;
-    Map<String, String> json = null;
-    String sessionKey = null;
+    IdentityProvider provider;
+    Map<String, String> json;
+    String sessionKey;
     boolean keepLoggedIn = true;
     String accessLocation = this.ip;
 
@@ -322,7 +322,7 @@ public class LineApiImpl implements LineApi {
    * @see api.line.LineApi#loginWithVerifier()
    */
   public String loginWithVerifierForCertificate() throws Exception {
-    Map json = null;
+    Map json;
     json = getCertResult(LINE_CERTIFICATE_URL);
     if (json == null) {
       throw new Exception("fail to pass certificate check.");
