@@ -81,16 +81,16 @@ public class LineClient {
   }
 
   public LineClient(String id, String password) throws Exception {
-    LineApi api = new LineApiImpl();
-    LoginResult result = api.login(id, password); // login
-    this.api = api;
+    LineApi apiLocal = new LineApiImpl();
+    LoginResult result = apiLocal.login(id, password); // login
+    this.api = apiLocal;
     init();
   }
 
   public LineClient(String id, String password, String certificate) throws Exception {
-    LineApi api = new LineApiImpl();
-    LoginResult result = api.login(id, password, certificate); // login
-    this.api = api;
+    LineApi apiLocal = new LineApiImpl();
+    LoginResult result = apiLocal.login(id, password, certificate); // login
+    this.api = apiLocal;
     init();
   }
 
@@ -306,11 +306,11 @@ public class LineClient {
     /** Refresh contacts of LineClient **/
     if (checkAuth()) {
       List<String> contactIds = this.api.getAllContactIds();
-      List<Contact> contacts = this.api.getContacts(contactIds);
+      List<Contact> contactsLocal = this.api.getContacts(contactIds);
 
       this.contacts = new ArrayList<LineContact>();
 
-      for (Contact contact : contacts) {
+      for (Contact contact : contactsLocal) {
         this.contacts.add(new LineContact(this, contact));
       }
     }
@@ -320,11 +320,11 @@ public class LineClient {
     // Refresh groups of LineClient
     if (checkAuth()) {
       List<String> contactIds = this.api.getBlockedContactIds();
-      List<Contact> contacts = this.api.getContacts(contactIds);
+      List<Contact> contactsLocal = this.api.getContacts(contactIds);
 
       List<LineContact> c = new ArrayList<LineContact>();
 
-      for (Contact contact : contacts) {
+      for (Contact contact : contactsLocal) {
         c.add(new LineContact(this, contact));
       }
       return c;
@@ -687,11 +687,11 @@ public class LineClient {
 
           // If sender is not found, check member list of group chat sent to
           if (sender == null && (receiver instanceof LineGroup || receiver instanceof LineRoom)) {
-            List<LineContact> contacts =
+            List<LineContact> contactsLocal =
                 receiver instanceof LineGroup ? ((LineRoom) receiver).getContacts()
                 // If sender is not found, check member list of room chat sent to
                     : ((LineGroup) receiver).getMembers();
-            for (LineContact contact : contacts) {
+            for (LineContact contact : contactsLocal) {
               if (contact.getId().equals(rawSender)) {
                 sender = contact;
                 break;
@@ -709,11 +709,11 @@ public class LineClient {
           }
 
           if (sender == null || receiver == null) {
-            List<Contact> contacts =
+            List<Contact> contactsLocal =
                 this.getApi().getContacts(Arrays.asList(new String[] {rawSender, rawReceiver}));
-            if (contacts != null && contacts.size() == 2) {
-              sender = new LineContact(this, contacts.get(0));
-              receiver = new LineContact(this, contacts.get(1));
+            if (contactsLocal != null && contactsLocal.size() == 2) {
+              sender = new LineContact(this, contactsLocal.get(0));
+              receiver = new LineContact(this, contactsLocal.get(1));
             }
             System.out.printf("[*] sender: %s  receiver: %s\n", sender, receiver);
             // yield (sender, receiver, message);

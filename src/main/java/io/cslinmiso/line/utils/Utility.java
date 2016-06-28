@@ -72,6 +72,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class Utility {
 
+  private static final String UTL_8 = "UTF-8";
 
   // 分割的tag
   public static final String splitTag = String.valueOf('\002');
@@ -205,7 +206,7 @@ public class Utility {
   public static String unescapeString(String str) {
     String result = null;
     try {
-      result = URLDecoder.decode(str, "UTF-8");
+      result = URLDecoder.decode(str, UTL_8);
     } catch (UnsupportedEncodingException e) {
       System.out.println("轉碼錯誤：" + e.getMessage());
       result = null;
@@ -242,7 +243,7 @@ public class Utility {
     List<String> rst = new ArrayList<String>();
     BufferedReader br = null;
     try {
-      br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), "UTF-8"));
+      br = new BufferedReader(new InputStreamReader(new FileInputStream(fileName), UTL_8));
       String in = null;
       while ((in = br.readLine()) != null) {
         rst.add(in);
@@ -268,7 +269,7 @@ public class Utility {
    */
   public static void writeFile(List<String> data, String fileName) throws IOException {
     BufferedWriter bw =
-        new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), "UTF-8"));
+        new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName), UTL_8));
     try {
       for (String d : data) {
         bw.write(d);
