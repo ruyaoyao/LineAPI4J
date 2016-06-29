@@ -158,7 +158,7 @@ public class Utility {
   }
 
   public static String getQueryString(Map target) {
-    StringBuffer sb = new StringBuffer();
+    StringBuilder sb = new StringBuilder();
     for (Object key : target.keySet()) {
       if ("_".equals(key)) continue;
       String[] t = (String[]) target.get(key);
@@ -185,7 +185,7 @@ public class Utility {
       byte[] passBytes = pass.getBytes();
       md.reset();
       byte[] digested = md.digest(passBytes);
-      StringBuffer sb = new StringBuffer();
+      StringBuilder sb = new StringBuilder();
       for (int i = 0; i < digested.length; i++) {
         sb.append(Integer.toHexString(0xff & digested[i]));
       }
