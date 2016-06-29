@@ -70,13 +70,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 
  * @author Trey Lin
  */
-public class Utility {
+public final class Utility {
 
   private static final String UTL_8 = "UTF-8";
 
   // 分割的tag
   public static final String splitTag = String.valueOf('\002');
 
+  private Utility() throws InstantiationException {
+    throw new InstantiationException("This utility class is not created for instantiation");
+  }
 
   public static boolean isEmptyObject(JSONObject object) {
     return object.names() == null;
