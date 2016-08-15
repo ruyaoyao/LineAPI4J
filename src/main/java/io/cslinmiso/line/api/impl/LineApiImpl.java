@@ -38,6 +38,7 @@ import io.cslinmiso.line.utils.Utility;
 
 import java.io.InputStream;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyFactory;
 import java.security.interfaces.RSAPublicKey;
 import java.security.spec.RSAPublicKeySpec;
@@ -223,7 +224,7 @@ public class LineApiImpl implements LineApi {
     String tmpMsg =
         (char) (sessionKey.length()) + sessionKey + (char) (id.length()) + id
             + (char) (password.length()) + password;
-    String message = new String(tmpMsg.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
+    String message = new String(tmpMsg.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
     String[] keyArr = json.get("rsa_key").split(",");
     String keyName = keyArr[0];
     String n = keyArr[1];
@@ -237,7 +238,7 @@ public class LineApiImpl implements LineApi {
     RSAPublicKey publicKey = (RSAPublicKey) keyFactory.generatePublic(pubKeySpec);
     Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
     cipher.init(Cipher.ENCRYPT_MODE, publicKey);
-    byte[] enBytes = cipher.doFinal(message.getBytes());
+    byte[] enBytes = cipher.doFinal(message.getBytes(StandardCharsets.UTF_8));
     String encryptString = Hex.encodeHexString(enBytes);
 
     THttpClient transport = new THttpClient(LINE_HTTP_URL);

@@ -42,6 +42,7 @@ import java.io.OutputStreamWriter;
 import java.io.StringWriter;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.SimpleDateFormat;
@@ -185,7 +186,7 @@ public final class Utility {
   public static String cryptWithMD5(String pass) {
     try {
       MessageDigest md = MessageDigest.getInstance("MD5");
-      byte[] passBytes = pass.getBytes();
+      byte[] passBytes = pass.getBytes(StandardCharsets.UTF_8);
       md.reset();
       byte[] digested = md.digest(passBytes);
       StringBuilder sb = new StringBuilder();
