@@ -34,6 +34,8 @@ package io.cslinmiso.line.model;
 import io.cslinmiso.line.api.LineApi;
 import io.cslinmiso.line.api.impl.LineApiImpl;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,15 +61,16 @@ import line.thrift.TalkException;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * 
  * @author Trey Lin
  */
-public class LineClient {
+public class LineClient implements Closeable {
 
-  LineApi api;
-  String authToken;
-  String certificate;
+  private final LineApi api;
   /** The revision. */
   public long revision;
 
@@ -76,26 +79,30 @@ public class LineClient {
   List<LineRoom> rooms;
   List<LineGroup> groups;
 
-  private LineClient() {
-    // throw new Exception("Please initialize LineClient with LineAPI.");
-  }
-
-  public LineClient(String id, String password) throws Exception {
-    LineApi apiLocal = new LineApiImpl();
-    LoginResult result = apiLocal.login(id, password); // login
-    this.api = apiLocal;
-    init();
-  }
-
-  public LineClient(String id, String password, String certificate) throws Exception {
-    LineApi apiLocal = new LineApiImpl();
-    LoginResult result = apiLocal.login(id, password, certificate); // login
-    this.api = apiLocal;
-    init();
+  public LineClient() throws Exception {
+    this(new LineApiImpl());
   }
 
   public LineClient(LineApi api) throws Exception {
     this.api = api;
+  }
+
+  public void login(@Nonnull String id, @Nonnull String password) throws Exception {
+    login(id, password, null, null);
+  }
+
+  public void login(
+          @Nonnull String id,
+          @Nonnull String password,
+          @Nullable String certificate,
+          @Nullable LoginCallback loginCallback) throws Exception {
+    this.api.login(id, password, certificate, loginCallback);
+    init();
+  }
+
+  public void loginWithAuthToken(@Nonnull String authToken)
+          throws Exception {
+    this.api.loginWithAuthToken(authToken);
     init();
   }
 
@@ -103,8 +110,6 @@ public class LineClient {
     // 認證通過後登入
     // String auth = api.loginWithVerifier();
     // Set up authToken
-    setAuthToken(api.getLineAccessToken());
-    setCertificate(api.getCertificate());
     // initialize
     this.setRevision(this.api.getLastOpRevision());
     this.getProfile();
@@ -758,7 +763,7 @@ public class LineClient {
 
   public boolean checkAuth() throws Exception {
     /** Check if client is logged in or not **/
-    if (this.authToken!= null) {
+    if (getAuthToken() != null) {
       return true;
     } else {
       throw new Exception("you need to login");
@@ -769,16 +774,8 @@ public class LineClient {
     return api;
   }
 
-  public void setApi(LineApi api) {
-    this.api = api;
-  }
-
   public String getAuthToken() {
-    return authToken;
-  }
-
-  public void setAuthToken(String authtoken) {
-    this.authToken = authtoken;
+    return api.getLineAccessToken();
   }
 
   public long getRevision() {
@@ -818,12 +815,11 @@ public class LineClient {
   }
 
   public String getCertificate() {
-    return certificate;
+    return api.getCertificate();
   }
 
-  public void setCertificate(String certificate) {
-    this.certificate = certificate;
+  @Override
+  public void close() throws IOException {
+    api.close();
   }
-
-
 }
