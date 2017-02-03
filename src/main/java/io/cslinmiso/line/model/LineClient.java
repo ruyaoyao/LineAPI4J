@@ -33,21 +33,10 @@ package io.cslinmiso.line.model;
 
 import io.cslinmiso.line.api.LineApi;
 import io.cslinmiso.line.api.impl.LineApiImpl;
-
-import java.io.Closeable;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import line.thrift.Contact;
 import line.thrift.ContentType;
 import line.thrift.ErrorCode;
 import line.thrift.Group;
-import line.thrift.LoginResult;
 import line.thrift.MIDType;
 import line.thrift.Message;
 import line.thrift.OpType;
@@ -57,12 +46,19 @@ import line.thrift.TMessageBox;
 import line.thrift.TMessageBoxWrapUp;
 import line.thrift.TMessageBoxWrapUpResponse;
 import line.thrift.TalkException;
-
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.Closeable;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 
@@ -775,7 +771,7 @@ public class LineClient implements Closeable {
   }
 
   public String getAuthToken() {
-    return api.getLineAccessToken();
+    return api.getAuthToken();
   }
 
   public long getRevision() {

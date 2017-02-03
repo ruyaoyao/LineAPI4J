@@ -33,26 +33,12 @@ package io.cslinmiso.line.api.impl;
  */
 
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.mashape.unirest.http.HttpResponse;
+import com.mashape.unirest.http.Unirest;
 import io.cslinmiso.line.api.LineApi;
 import io.cslinmiso.line.model.LoginCallback;
-import io.cslinmiso.line.utils.Utility;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
-import java.security.KeyFactory;
-import java.security.interfaces.RSAPublicKey;
-import java.security.spec.RSAPublicKeySpec;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import javax.crypto.Cipher;
-
 import line.thrift.AuthQrcode;
 import line.thrift.Contact;
 import line.thrift.Group;
@@ -68,20 +54,37 @@ import line.thrift.TMessageBoxWrapUpResponse;
 import line.thrift.TalkException;
 import line.thrift.TalkService;
 import line.thrift.TalkService.Client;
-
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.Header;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHeader;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.THttpClient;
-import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.JsonNode;
-import com.mashape.unirest.http.Unirest;
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import javax.crypto.Cipher;
+import java.io.IOException;
+import java.io.InputStream;
+import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyFactory;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.RSAPublicKeySpec;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class LineApiImpl implements LineApi {
 
@@ -118,21 +121,22 @@ public class LineApiImpl implements LineApi {
   /** The revision. */
   private long revision;
 
-  /** The _headers. */
-  private Map<String, String> headers = new HashMap<String, String>();
-
   /** The _client. */
   public TalkService.Client client;
+
+  private final HttpClient httpClient;
 
   public LineApiImpl(OSType osType, String systemName) {
     this.osType = osType;
     this.systemName = systemName;
-    initHeaders();
+    buildHeaders();
+    httpClient = HttpClientBuilder.create()
+            .setDefaultHeaders(buildHeaders())
+            .build();
   }
 
   public LineApiImpl() {
     this(OSType.MAC, "Line4J");
-
   }
 
 
@@ -148,7 +152,7 @@ public class LineApiImpl implements LineApi {
     // }
   }
 
-  private void initHeaders() {
+  private Collection<Header> buildHeaders() {
     String osVersion;
     String userAgent;
     String app;
@@ -162,9 +166,16 @@ public class LineApiImpl implements LineApi {
       userAgent = "DESKTOP:MAC:" + osVersion + "(" + version + ")";
       app = "DESKTOPMAC\t" + osVersion + "\tMAC\t" + version;
     }
+    List<Header> headers = new ArrayList<>();
 
-    headers.put("User-Agent", userAgent);
-    headers.put("X-Line-Application", app);
+    headers.add(new BasicHeader("User-Agent", userAgent));
+    headers.add(new BasicHeader("X-Line-Application", app));
+
+    // The "fetchOperations" doesn't work properly on keep-alive connection
+    // If there's the header "Connection: keep-alive", the server won't close the
+    // connection, but it won't send response when a new operation is received.
+    headers.add(new BasicHeader("Connection", "close"));
+    return headers;
   }
 
   /**
@@ -172,10 +183,11 @@ public class LineApiImpl implements LineApi {
    * 
    * @throws TTransportException
    */
-  private Client ready() throws TTransportException {
+  public Client ready() throws TTransportException {
 
-    THttpClient transport = new THttpClient(LINE_HTTP_IN_URL);
-    transport.setCustomHeaders(headers);
+    //THttpClient transport = new THttpClient(LINE_HTTP_IN_URL);
+    THttpClient transport = new THttpClient(LINE_HTTP_IN_URL, httpClient);
+    transport.setCustomHeader(X_LINE_ACCESS, getAuthToken());
     transport.open();
 
     return new TalkService.Client(new TCompactProtocol(transport));
@@ -196,7 +208,7 @@ public class LineApiImpl implements LineApi {
     this.password = password;
     this.certificate = certificate;
     IdentityProvider provider;
-    Map<String, String> json;
+    JsonNode certResult;
     String sessionKey;
     boolean keepLoggedIn = true;
     String accessLocation = this.ip;
@@ -204,17 +216,17 @@ public class LineApiImpl implements LineApi {
     // Login to LINE server.
     if (id.matches(EMAIL_REGEX)) {
       provider = IdentityProvider.LINE; // LINE
-      json = getCertResult(LINE_SESSION_LINE_URL);
+      certResult = getCertResult(LINE_SESSION_LINE_URL);
     } else {
       provider = IdentityProvider.NAVER_KR; // NAVER
-      json = getCertResult(LINE_SESSION_NAVER_URL);
+      certResult = getCertResult(LINE_SESSION_NAVER_URL);
     }
 
-    sessionKey = json.get("session_key");
+    sessionKey = certResult.get("session_key").asText();
     String message =
         (char) (sessionKey.length()) + sessionKey + (char) (id.length()) + id
             + (char) (password.length()) + password;
-    String[] keyArr = json.get("rsa_key").split(",");
+    String[] keyArr = certResult.get("rsa_key").asText().split(",");
     String keyName = keyArr[0];
     String n = keyArr[1];
     String e = keyArr[2];
@@ -230,38 +242,31 @@ public class LineApiImpl implements LineApi {
     byte[] enBytes = cipher.doFinal(message.getBytes(StandardCharsets.UTF_8));
     String encryptString = Hex.encodeHexString(enBytes);
 
-    THttpClient transport = new THttpClient(LINE_HTTP_URL);
-    transport.setCustomHeaders(headers);
+    THttpClient transport = new THttpClient(LINE_HTTP_URL, httpClient);
     transport.open();
     LoginResult result;
-    try {
+    TProtocol protocol = new TCompactProtocol(transport);
+    this.client = new TalkService.Client(protocol);
 
-      TProtocol protocol = new TCompactProtocol(transport);
-      this.client = new TalkService.Client(protocol);
+    result = this.client.loginWithIdentityCredentialForCertificate(provider, keyName, encryptString,
+                    keepLoggedIn, accessLocation, this.systemName, this.certificate);
 
-      result =
-              this.client.loginWithIdentityCredentialForCertificate(provider, keyName, encryptString,
-                      keepLoggedIn, accessLocation, this.systemName, this.certificate);
+    if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM) {
 
-      if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM) {
+      setAuthToken(result.getVerifier());
 
-        headers.put(X_LINE_ACCESS, result.getVerifier());
-
-        if (loginCallback != null) {
-          loginCallback.onDeviceConfirmRequired(result.getPinCode());
-        } else {
-          throw new Exception("Device confirmation is required. Please set " +
-                  LoginCallback.class.getSimpleName() + " to get the pin code");
-        }
-
-        // await for pinCode to be certified, it will return a verifier afterward.
-        loginWithVerifierForCertificate();
-      } else if (result.getType() == LoginResultType.SUCCESS) {
-        // if param certificate has passed certification
-        setAuthToken(result.getAuthToken());
+      if (loginCallback != null) {
+        loginCallback.onDeviceConfirmRequired(result.getPinCode());
+      } else {
+        throw new Exception("Device confirmation is required. Please set " +
+                LoginCallback.class.getSimpleName() + " to get the pin code");
       }
-    } finally {
-      close();
+
+      // await for pinCode to be certified, it will return a verifier afterward.
+      loginWithVerifierForCertificate();
+    } else if (result.getType() == LoginResultType.SUCCESS) {
+      // if param certificate has passed certification
+      setAuthToken(result.getAuthToken());
     }
 
     // Once the client passed the verification, switch connection to HTTP_IN_URL
@@ -278,8 +283,8 @@ public class LineApiImpl implements LineApi {
     if (StringUtils.isNotEmpty(authToken)) {
       setAuthToken(authToken);
     }
-    THttpClient transport = new THttpClient(LINE_HTTP_URL);
-    transport.setCustomHeaders(headers);
+    THttpClient transport = new THttpClient(LINE_HTTP_URL, httpClient);
+    transport.setCustomHeader(X_LINE_ACCESS, getAuthToken());
     transport.open();
 
     TProtocol protocol = new TCompactProtocol(transport);
@@ -297,8 +302,7 @@ public class LineApiImpl implements LineApi {
     // Map<String, String> json = null;
     boolean keepLoggedIn = false;
 
-    THttpClient transport = new THttpClient(LINE_HTTP_URL);
-    transport.setCustomHeaders(headers);
+    THttpClient transport = new THttpClient(LINE_HTTP_URL, httpClient);
     transport.open();
 
     TProtocol protocol = new TCompactProtocol(transport);
@@ -307,7 +311,7 @@ public class LineApiImpl implements LineApi {
 
     AuthQrcode result = this.client.getAuthQrcode(keepLoggedIn, systemName);
 
-    headers.put(X_LINE_ACCESS, result.getVerifier());
+    setAuthToken(result.getVerifier());
 
     System.out.println("Retrieved QR Code.");
 
@@ -322,15 +326,11 @@ public class LineApiImpl implements LineApi {
    * @see api.line.LineApi#loginWithVerifier()
    */
   public String loginWithVerifierForCertificate() throws Exception {
-    Map json;
-    json = getCertResult(LINE_CERTIFICATE_URL);
-    if (json == null) {
-      throw new Exception("fail to pass certificate check.");
-    }
+    JsonNode certResult = getCertResult(LINE_CERTIFICATE_URL);
 
     // login with verifier
-    json = (Map) json.get("result");
-    String verifierLocal = (String) json.get("verifier");
+    JsonNode resultNode = certResult.get("result");
+    String verifierLocal = resultNode.get("verifier").asText();
     this.verifier = verifierLocal;
     LoginResult result = this.client.loginWithVerifierForCertificate(verifierLocal);
 
@@ -345,19 +345,25 @@ public class LineApiImpl implements LineApi {
     }
   }
 
-  public Map getCertResult(String url) throws Exception {
-    Unirest unirest = new Unirest();
-    // set timed out in 2 mins.
-    Unirest.setTimeouts(120000, 120000);
-    HttpResponse<JsonNode> jsonResponse = unirest.get(url).headers(this.headers).asJson();
-    return Utility.toMap(jsonResponse.getBody().getObject());
+  private JsonNode getCertResult(String url) throws Exception {
+    HttpGet httpGet = new HttpGet(url);
+    ObjectMapper objectMapper = new ObjectMapper();
+    return objectMapper.readTree(httpClient.execute(httpGet).getEntity().getContent());
   }
 
   public boolean postContent(String url, Map<String, Object> data, InputStream is) throws Exception {
-    Unirest unirest = new Unirest();
     byte[] byteArray = IOUtils.toByteArray(is);
-    HttpResponse<JsonNode> jsonResponse =
-        unirest.post(url).headers(this.headers).fields(data).field("file", byteArray, "").asJson();
+    Map<String, String> headers = buildHeaders()
+            .stream()
+            .collect(Collectors.toMap(Header::getName, Header::getValue));
+    headers.put(X_LINE_ACCESS, getAuthToken());
+
+    HttpResponse<String> jsonResponse =
+        Unirest.post(url)
+                .headers(headers)
+                .fields(data)
+                .field("file", byteArray, "")
+                .asString();
     return jsonResponse.getStatus() == 201;
   }
 
@@ -611,7 +617,6 @@ public class LineApiImpl implements LineApi {
   }
 
   private void setAuthToken(String token) {
-    headers.put(X_LINE_ACCESS, token);
     this.authToken = token;
   }
 
@@ -623,8 +628,8 @@ public class LineApiImpl implements LineApi {
     this.client = client;
   }
 
-  public String getLineAccessToken() {
-    return headers.get(X_LINE_ACCESS);
+  public String getAuthToken() {
+    return authToken;
   }
 
   public String getCertificate() {
@@ -637,12 +642,6 @@ public class LineApiImpl implements LineApi {
 
   @Override
   public void close() throws IOException {
-    if (client == null) {
-      return;
-    }
-    TTransport inputTransport = client.getInputProtocol().getTransport();
-    inputTransport.close();
-    TTransport outputTransport = client.getOutputProtocol().getTransport();
-    outputTransport.close();
+    HttpClientUtils.closeQuietly(httpClient);
   }
 }

@@ -32,11 +32,11 @@
 
 package io.cslinmiso.line.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import line.thrift.Contact;
 import line.thrift.Group;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class LineGroup extends LineBase {
   /**

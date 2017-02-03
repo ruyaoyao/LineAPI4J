@@ -31,13 +31,6 @@
 
 package io.cslinmiso.line.api;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import io.cslinmiso.line.model.LoginCallback;
 import line.thrift.AuthQrcode;
 import line.thrift.Contact;
@@ -50,13 +43,16 @@ import line.thrift.Room;
 import line.thrift.TMessageBoxWrapUp;
 import line.thrift.TMessageBoxWrapUpResponse;
 import line.thrift.TalkException;
-import line.thrift.TalkService.Client;
-
 import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <pre> LineApi, TODO: add Class Javadoc here. </pre>
@@ -150,13 +146,6 @@ public interface LineApi extends Closeable {
    * @see io.cslinmiso.line.api.LineApi#loginWithVerifier()
    */
   String loginWithVerifierForCertificate() throws Exception;
-
-  /*
-   * (non-Javadoc)
-   * 
-   * @see io.cslinmiso.line.api.LineApi#getCertResult(java.lang.String)
-   */
-  Map getCertResult(String url) throws Exception;
 
   boolean postContent(String url, Map<String, Object> data, InputStream is) throws Exception;
 
@@ -374,7 +363,7 @@ public interface LineApi extends Closeable {
    */
   TMessageBoxWrapUpResponse getMessageBoxCompactWrapUpList(int start, int count) throws Exception;
 
-  String getLineAccessToken();
+  String getAuthToken();
 
   String getCertificate();
 

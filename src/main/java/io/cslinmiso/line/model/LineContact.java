@@ -33,11 +33,10 @@
 package io.cslinmiso.line.model;
 
 import io.cslinmiso.line.api.LineApi;
+import line.thrift.Contact;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import line.thrift.Contact;
 
 /**
  * The Class LineContact.
