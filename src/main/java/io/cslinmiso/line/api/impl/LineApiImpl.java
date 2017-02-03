@@ -369,7 +369,7 @@ public class LineApiImpl implements LineApi {
    **/
   public boolean updateAuthToken() throws Exception {
     if (this.certificate != null) {
-      this.login(this.id, this.password);
+      this.login(this.id, this.password, this.certificate, null);
       this.loginWithAuthToken(this.authToken);
       return true;
     } else {
