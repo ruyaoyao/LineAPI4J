@@ -34,8 +34,10 @@ package io.cslinmiso.line.api.impl;
 
 
 import io.cslinmiso.line.api.LineApi;
+import io.cslinmiso.line.model.LoginCallback;
 import io.cslinmiso.line.utils.Utility;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -47,6 +49,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.crypto.Cipher;
 
 import line.thrift.AuthQrcode;
@@ -72,6 +76,7 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.THttpClient;
+import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 
 import com.mashape.unirest.http.HttpResponse;
@@ -80,9 +85,12 @@ import com.mashape.unirest.http.Unirest;
 
 public class LineApiImpl implements LineApi {
 
-  private static final String EMAIL_REGEX = "[^@]+@[^@]+\\.[^@]+";
+  public enum OSType {
+    WINDOWS,
+    MAC
+  }
 
-  private static final String CERT_FILE = "./line.crt";
+  private static final String EMAIL_REGEX = "[^@]+@[^@]+\\.[^@]+";
 
   private static final String X_LINE_ACCESS = "X-Line-Access";
 
@@ -93,7 +101,9 @@ public class LineApiImpl implements LineApi {
   private String version = "4.7.0";
 
   /** The com_name. */
-  private String systemName = "Line4J";
+  private final String systemName;
+
+  private final OSType osType;
 
   private String id;
 
@@ -114,12 +124,15 @@ public class LineApiImpl implements LineApi {
   /** The _client. */
   public TalkService.Client client;
 
-  public LineApiImpl() {
-    initHeaders("");
+  public LineApiImpl(OSType osType, String systemName) {
+    this.osType = osType;
+    this.systemName = systemName;
+    initHeaders();
   }
 
-  public LineApiImpl(String systemName) {
-    initHeaders(systemName);
+  public LineApiImpl() {
+    this(OSType.MAC, "Line4J");
+
   }
 
 
@@ -135,24 +148,19 @@ public class LineApiImpl implements LineApi {
     // }
   }
 
-  private void initHeaders(String systemName) {
+  private void initHeaders() {
     String osVersion;
     String userAgent;
     String app;
-    boolean isMac = true;
 
-    if (isMac) {
-      osVersion = "10.10.4-YOSEMITE-x64";
-      userAgent = "DESKTOP:MAC:" + osVersion + "(" + version + ")";
-      app = "DESKTOPMAC\t" + osVersion + "\tMAC\t" + version;
-    } else {
+    if (osType.equals(OSType.WINDOWS)) {
       osVersion = "6.1.7600-7-x64";
       userAgent = "DESKTOP:WIN:" + osVersion + "(" + version + ")";
       app = "DESKTOPWIN\t" + osVersion + "\tWINDOWS\t" + version;
-    }
-
-    if (StringUtils.isNotEmpty(systemName)) {
-      this.systemName = systemName;
+    } else {
+      osVersion = "10.10.4-YOSEMITE-x64";
+      userAgent = "DESKTOP:MAC:" + osVersion + "(" + version + ")";
+      app = "DESKTOPMAC\t" + osVersion + "\tMAC\t" + version;
     }
 
     headers.put("User-Agent", userAgent);
@@ -162,26 +170,31 @@ public class LineApiImpl implements LineApi {
   /**
    * Ready.
    * 
-   * @return the talk service. client
    * @throws TTransportException
    */
-  public Client ready() throws TTransportException {
+  private Client ready() throws TTransportException {
 
     THttpClient transport = new THttpClient(LINE_HTTP_IN_URL);
     transport.setCustomHeaders(headers);
     transport.open();
 
-    TProtocol protocol = new TCompactProtocol(transport);
-
-    return new TalkService.Client(protocol);
+    return new TalkService.Client(new TCompactProtocol(transport));
   }
 
-  public LoginResult login(String id, String password) throws Exception {
-    return login(id, password, null);
+  @Override
+  public LoginResult login(@Nonnull String id, @Nonnull String password) throws Exception {
+    return login(id, password, null, null);
   }
 
-  public LoginResult login(String id, String password, String certificate) throws Exception {
-
+  @Override
+  public LoginResult login(@Nonnull String id,
+                           @Nonnull String password,
+                           @Nullable String certificate,
+                           @Nullable LoginCallback loginCallback)
+          throws Exception {
+    this.id = id;
+    this.password = password;
+    this.certificate = certificate;
     IdentityProvider provider;
     Map<String, String> json;
     String sessionKey;
@@ -197,34 +210,10 @@ public class LineApiImpl implements LineApi {
       json = getCertResult(LINE_SESSION_NAVER_URL);
     }
 
-    if (id != null) {
-      this.id = id;
-    }
-
-    if (password != null) {
-      this.password = password;
-    }
-
-    if (StringUtils.isNotEmpty(certificate)) {
-      setCertificate(certificate);
-    } else {
-      // read the certificate file if it exists
-      try {
-        List<String> readFile = Utility.readFile(LineApiImpl.CERT_FILE);
-        String tmpCert = readFile != null ? readFile.get(0) : "";
-        if (tmpCert != null) {
-          setCertificate(tmpCert);
-        }
-      } catch (Exception ex) {
-        setCertificate("");
-      }
-    }
-
     sessionKey = json.get("session_key");
-    String tmpMsg =
+    String message =
         (char) (sessionKey.length()) + sessionKey + (char) (id.length()) + id
             + (char) (password.length()) + password;
-    String message = new String(tmpMsg.getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8);
     String[] keyArr = json.get("rsa_key").split(",");
     String keyName = keyArr[0];
     String n = keyArr[1];
@@ -244,29 +233,39 @@ public class LineApiImpl implements LineApi {
     THttpClient transport = new THttpClient(LINE_HTTP_URL);
     transport.setCustomHeaders(headers);
     transport.open();
+    LoginResult result;
+    try {
 
-    TProtocol protocol = new TCompactProtocol(transport);
-    this.client = new TalkService.Client(protocol);
+      TProtocol protocol = new TCompactProtocol(transport);
+      this.client = new TalkService.Client(protocol);
 
-    LoginResult result =
-        this.client.loginWithIdentityCredentialForCertificate(provider, keyName, encryptString,
-            keepLoggedIn, accessLocation, this.systemName, this.certificate);
+      result =
+              this.client.loginWithIdentityCredentialForCertificate(provider, keyName, encryptString,
+                      keepLoggedIn, accessLocation, this.systemName, this.certificate);
 
-    if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM) {
+      if (result.getType() == LoginResultType.REQUIRE_DEVICE_CONFIRM) {
 
-      headers.put(X_LINE_ACCESS, result.getVerifier());
-      String pinCode = result.getPinCode();
+        headers.put(X_LINE_ACCESS, result.getVerifier());
 
-      System.out.printf("Enter PinCode '%s' to your mobile phone in 2 minutes.\n", pinCode);
-      // await for pinCode to be certified, it will return a verifier afterward.
-      loginWithVerifierForCertificate();
-    } else if (result.getType() == LoginResultType.SUCCESS) {
-      // if param certificate has passed certification
-      setAuthToken(result.getAuthToken());
+        if (loginCallback != null) {
+          loginCallback.onDeviceConfirmRequired(result.getPinCode());
+        } else {
+          throw new Exception("Device confirmation is required. Please set " +
+                  LoginCallback.class.getSimpleName() + " to get the pin code");
+        }
+
+        // await for pinCode to be certified, it will return a verifier afterward.
+        loginWithVerifierForCertificate();
+      } else if (result.getType() == LoginResultType.SUCCESS) {
+        // if param certificate has passed certification
+        setAuthToken(result.getAuthToken());
+      }
+    } finally {
+      close();
     }
 
     // Once the client passed the verification, switch connection to HTTP_IN_URL
-    this.client = ready();
+    client = ready();
     return result;
   }
 
@@ -337,12 +336,8 @@ public class LineApiImpl implements LineApi {
 
     if (result.getType() == LoginResultType.SUCCESS) {
       setAuthToken(result.getAuthToken());
-      String tmpCert = result.getCertificate();
-      if (tmpCert != null) {
-        Utility.writeFile(IOUtils.toInputStream(tmpCert), this.CERT_FILE);
-        setCertificate(tmpCert);
-      }
-      return tmpCert;
+      setCertificate(result.getCertificate());
+      return result.getCertificate();
     } else if (result.getType() == LoginResultType.REQUIRE_QRCODE) {
       throw new Exception("require QR code");
     } else {
@@ -374,7 +369,7 @@ public class LineApiImpl implements LineApi {
    **/
   public boolean updateAuthToken() throws Exception {
     if (this.certificate != null) {
-      this.login(this.id, this.password);
+      this.login(this.id, this.password, this.certificate, null);
       this.loginWithAuthToken(this.authToken);
       return true;
     } else {
@@ -640,4 +635,14 @@ public class LineApiImpl implements LineApi {
     this.certificate = certificate;
   }
 
+  @Override
+  public void close() throws IOException {
+    if (client == null) {
+      return;
+    }
+    TTransport inputTransport = client.getInputProtocol().getTransport();
+    inputTransport.close();
+    TTransport outputTransport = client.getOutputProtocol().getTransport();
+    outputTransport.close();
+  }
 }

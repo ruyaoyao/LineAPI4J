@@ -15,8 +15,14 @@
 	</properties>
 
 	<dependencies>
+		<!-- For annotations like @NonNull -->
 		<dependency>
-			<groupId>line.thrift.</groupId>
+			<groupId>com.google.code.findbugs</groupId>
+			<artifactId>jsr305</artifactId>
+			<version>RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>line.thrift</groupId>
 			<artifactId>thrift-line-talkservice</artifactId>
 			<version>1.0</version>
 			<scope>system</scope>

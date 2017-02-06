@@ -31,11 +31,14 @@
 
 package io.cslinmiso.line.api;
 
+import java.io.Closeable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.cslinmiso.line.model.LoginCallback;
 import line.thrift.AuthQrcode;
 import line.thrift.Contact;
 import line.thrift.Group;
@@ -52,12 +55,15 @@ import line.thrift.TalkService.Client;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 /**
  * <pre> LineApi, TODO: add Class Javadoc here. </pre>
  * 
  * @author TreyLin
  */
-public interface LineApi {
+public interface LineApi extends Closeable {
 
   /**
    * The Constant LINE_DOMAIN.
@@ -115,16 +121,12 @@ public interface LineApi {
   /** The Constant DATE_PATTERN. */
   public static final String DATE_PATTERN = "yyyyMMdd";
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see io.cslinmiso.line.api.LineApi#ready()
-   */
-  Client ready() throws TTransportException;
+  LoginResult login(@Nonnull String id, @Nonnull String password) throws Exception;
 
-  LoginResult login(String id, String password) throws Exception;
-
-  LoginResult login(String id, String password, String certificate) throws Exception;
+  LoginResult login(@Nonnull String id,
+                    @Nonnull String password,
+                    @Nullable String certificate,
+                    @Nullable LoginCallback loginCallback) throws Exception;
 
   boolean updateAuthToken() throws Exception;
 
@@ -376,4 +378,5 @@ public interface LineApi {
 
   String getCertificate();
 
+  void close() throws IOException;
 }

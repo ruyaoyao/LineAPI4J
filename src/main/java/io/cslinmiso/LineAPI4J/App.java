@@ -33,6 +33,7 @@ package io.cslinmiso.LineAPI4J;
 
 import io.cslinmiso.line.model.LineClient;
 import io.cslinmiso.line.model.LineContact;
+import io.cslinmiso.line.model.LoginCallback;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -49,15 +50,20 @@ public class App
       try {
         String id = "xxx@xx.com";
         String password = "";
-        String certificate = "";
-        
+
         // There are two ways to log in, by id and password.
 		// --Certificate token is still not avaliable for log in.--
         // if you have acquired certificate token, you could use it to login too. 
         // it will skip the pincode check.
 
         // init client
-        LineClient client = new LineClient(id, password, certificate);
+        LineClient client = new LineClient();
+        client.login(id, password, null, new LoginCallback() {
+          @Override
+          public void onDeviceConfirmRequired(String pinCode) {
+            System.out.println("Please enter pin code " + pinCode + " on your device");
+          }
+        });
         LineContact someoneContact = client.getContactByName("someone"); // find contact
 
         // Sending image by local image path
