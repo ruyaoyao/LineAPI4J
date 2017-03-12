@@ -33,8 +33,6 @@ package io.cslinmiso.line.model;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
 import io.cslinmiso.line.api.LineApi;
 import io.cslinmiso.line.api.impl.LineApiImpl;
 import line.thrift.ContentType;
@@ -177,89 +175,55 @@ public abstract class LineBase {
    * Send image by path.
    * 
    * @param path is local path of image to send
-   * @return true, if successful
    * @throws Exception the exception
    */
-  public boolean sendImage(String path) throws Exception {
-    return sendImage(new File(path));
+  public void sendImage(String path) throws Exception {
+    sendImage(new File(path));
   }
 
   /**
    * Send image.
    * 
    * @param file is File
-   * @return true, if successful
    * @throws Exception the exception
    */
-  public boolean sendImage(File file) throws Exception {
-    return sendImage(new BufferedInputStream(new FileInputStream(file)));
+  public void sendImage(File file) throws Exception {
+    try (InputStream inputStream = new FileInputStream(file)) {
+      sendImage(new BufferedInputStream(inputStream));
+    }
   }
 
   /**
    * Send image.
    * 
    * @param is the is
-   * @return true, if successful
    * @throws Exception the exception
    */
-  public boolean sendImage(InputStream is) throws Exception {
-    try {
-      LineMessage message = new LineMessage();
-      message.setTo(getId());
-      message.setText("");
-      message.setContentType(ContentType.IMAGE);
+  public void sendImage(InputStream is) throws Exception {
+    LineMessage message = new LineMessage();
+    message.setTo(getId());
+    message.setText("");
+    message.setContentType(ContentType.IMAGE);
 
-      Message sendMessage = client.sendMessage(0, message);
-      String messageId = sendMessage.getId();
+    Message sendMessage = client.sendMessage(0, message);
+    String messageId = sendMessage.getId();
 
-      // preparing params which is detail of image to upload server
-      ObjectMapper objectMapper = new ObjectMapper();
-      ObjectNode objectNode = objectMapper.createObjectNode();
-      objectNode.put("name", "media");
-      objectNode.put("oid", messageId);
-      objectNode.put("size", is.available());
-      objectNode.put("type", "image");
-      objectNode.put("ver", "1.0");
+    // preparing params which is detail of image to upload server
+    ObjectMapper objectMapper = new ObjectMapper();
+    ObjectNode objectNode = objectMapper.createObjectNode();
+    objectNode.put("name", "media");
+    objectNode.put("oid", messageId);
+    objectNode.put("size", is.available());
+    objectNode.put("type", "image");
+    objectNode.put("ver", "1.0");
 
-      Map<String, Object> data = new HashMap<String, Object>();
-      // data.put("file", file);
-      data.put("params", objectMapper.writeValueAsString(objectNode));
+    Map<String, String> data = new HashMap<>();
+    // data.put("file", file);
+    data.put("params", objectMapper.writeValueAsString(objectNode));
 
-      String url = LineApi.LINE_UPLOADING_URL;
-      LineApiImpl api = (LineApiImpl) client.getApi();
-      boolean isUploaded = api.postContent(url, data, is);
-
-      if (isUploaded == false) {
-        throw new Exception("Fail to upload image.");
-      }
-      return true;
-    } catch (Exception e) {
-      throw e;
-    }
-  }
-
-  /**
-   * Send a image with given image url
-   * 
-   * @param url the image url to send
-   * @return true, if successful
-   * @throws Exception the exception
-   */
-  public boolean sendImageWithURL(String url) throws Exception {
-    if (StringUtils.isEmpty(url)) return false;
-    try {
-      HttpResponse<InputStream> response = Unirest.get(url).asBinary();
-      InputStream is = response.getBody();
-      if (is == null) {
-        return false;
-      }
-
-      sendImage(is);
-
-      return true;
-    } catch (Exception e) {
-      throw e;
-    }
+    String url = LineApi.LINE_UPLOADING_URL;
+    LineApiImpl api = (LineApiImpl) client.getApi();
+    api.postContent(url, data, is);
   }
 
   public boolean sendFile(String path) throws Exception {
@@ -273,8 +237,8 @@ public abstract class LineBase {
   /**
    * Send file.
    * 
-   * @param String name
-   * @param String path
+   * @param name
+   * @param path
    * @return true, if successful
    * @throws Exception the exception
    */
@@ -286,8 +250,8 @@ public abstract class LineBase {
   /**
    * Send file.
    * 
-   * @param String name
-   * @param String path
+   * @param name
+   * @param file
    * @return true, if successful
    * @throws Exception the exception
    */
@@ -338,38 +302,14 @@ public abstract class LineBase {
       objectNode.put("type", "file");
       objectNode.put("ver", "1.0");
 
-      Map<String, Object> data = new HashMap<String, Object>();
+      Map<String, String> data = new HashMap<>();
       data.put("params", objectMapper.writeValueAsString(objectNode));
 
       String url = LineApi.LINE_UPLOADING_URL;
       LineApiImpl api = (LineApiImpl) client.getApi();
-      boolean isUploaded = api.postContent(url, data, is);
+      api.postContent(url, data, is);
 
-      if (isUploaded == false) {
-        throw new Exception("Fail to upload file.");
-      }
       return true;
-    } catch (Exception e) {
-      throw e;
-    }
-  }
-
-  /**
-   * Send a file with given file url
-   * 
-   * @param url the file url to send
-   * @return true, if successful
-   * @throws Exception the exception
-   */
-  public boolean sendFileWithURL(String url) throws Exception {
-    if (StringUtils.isEmpty(url)) return false;
-    try {
-      HttpResponse<InputStream> response = Unirest.get(url).asBinary();
-      InputStream is = response.getBody();
-      if (is == null) {
-        return false;
-      }
-      return sendFile(url.substring(url.lastIndexOf("/") + 1), is);
     } catch (Exception e) {
       throw e;
     }

@@ -35,8 +35,6 @@ package io.cslinmiso.line.api.impl;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.mashape.unirest.http.HttpResponse;
-import com.mashape.unirest.http.Unirest;
 import io.cslinmiso.line.api.LineApi;
 import io.cslinmiso.line.model.LoginCallback;
 import line.thrift.AuthQrcode;
@@ -56,11 +54,16 @@ import line.thrift.TalkService;
 import line.thrift.TalkService.Client;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.HttpClientUtils;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.thrift.TException;
@@ -72,6 +75,7 @@ import org.apache.thrift.transport.TTransportException;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.crypto.Cipher;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -101,7 +105,7 @@ public class LineApiImpl implements LineApi {
   private String ip = "127.0.0.1";
 
   /** The line application version. */
-  private String version = "4.7.0";
+  private static final String VERSION = "4.7.0";
 
   /** The com_name. */
   private final String systemName;
@@ -159,12 +163,12 @@ public class LineApiImpl implements LineApi {
 
     if (osType.equals(OSType.WINDOWS)) {
       osVersion = "6.1.7600-7-x64";
-      userAgent = "DESKTOP:WIN:" + osVersion + "(" + version + ")";
-      app = "DESKTOPWIN\t" + osVersion + "\tWINDOWS\t" + version;
+      userAgent = "DESKTOP:WIN:" + osVersion + "(" + VERSION + ")";
+      app = "DESKTOPWIN\t" + osVersion + "\tWINDOWS\t" + VERSION;
     } else {
       osVersion = "10.10.4-YOSEMITE-x64";
-      userAgent = "DESKTOP:MAC:" + osVersion + "(" + version + ")";
-      app = "DESKTOPMAC\t" + osVersion + "\tMAC\t" + version;
+      userAgent = "DESKTOP:MAC:" + osVersion + "(" + VERSION + ")";
+      app = "DESKTOPMAC\t" + osVersion + "\tMAC\t" + VERSION;
     }
     List<Header> headers = new ArrayList<>();
 
@@ -176,21 +180,6 @@ public class LineApiImpl implements LineApi {
     // connection, but it won't send response when a new operation is received.
     headers.add(new BasicHeader("Connection", "close"));
     return headers;
-  }
-
-  /**
-   * Ready.
-   * 
-   * @throws TTransportException
-   */
-  public Client ready() throws TTransportException {
-
-    //THttpClient transport = new THttpClient(LINE_HTTP_IN_URL);
-    THttpClient transport = new THttpClient(LINE_HTTP_IN_URL, httpClient);
-    transport.setCustomHeader(X_LINE_ACCESS, getAuthToken());
-    transport.open();
-
-    return new TalkService.Client(new TCompactProtocol(transport));
   }
 
   @Override
@@ -270,7 +259,7 @@ public class LineApiImpl implements LineApi {
     }
 
     // Once the client passed the verification, switch connection to HTTP_IN_URL
-    client = ready();
+    loginWithAuthToken(getAuthToken());
     return result;
   }
 
@@ -280,15 +269,13 @@ public class LineApiImpl implements LineApi {
    * @see api.line.LineApi#loginWithAuthToken(java.lang.String)
    */
   public void loginWithAuthToken(String authToken) throws Exception {
-    if (StringUtils.isNotEmpty(authToken)) {
-      setAuthToken(authToken);
-    }
-    THttpClient transport = new THttpClient(LINE_HTTP_URL, httpClient);
-    transport.setCustomHeader(X_LINE_ACCESS, getAuthToken());
+    THttpClient transport = new THttpClient(LINE_HTTP_IN_URL, httpClient);
+    transport.setCustomHeader(X_LINE_ACCESS, authToken);
     transport.open();
 
     TProtocol protocol = new TCompactProtocol(transport);
     setClient(new TalkService.Client(protocol));
+    setAuthToken(authToken);
   }
 
   /*
@@ -346,25 +333,41 @@ public class LineApiImpl implements LineApi {
   }
 
   private JsonNode getCertResult(String url) throws Exception {
+
     HttpGet httpGet = new HttpGet(url);
+
+    String authToken = getAuthToken();
+    if (authToken != null) {
+      httpGet.setHeader(X_LINE_ACCESS, authToken);
+    }
+
     ObjectMapper objectMapper = new ObjectMapper();
-    return objectMapper.readTree(httpClient.execute(httpGet).getEntity().getContent());
+    org.apache.http.HttpResponse response = httpClient.execute(httpGet);
+    int statusCode = response.getStatusLine().getStatusCode();
+    if (statusCode != HttpStatus.SC_OK) {
+      throw new IOException("Fail to get certificate from URL " + url + ". Status: " + statusCode);
+    }
+    return objectMapper.readTree(response.getEntity().getContent());
   }
 
-  public boolean postContent(String url, Map<String, Object> data, InputStream is) throws Exception {
-    byte[] byteArray = IOUtils.toByteArray(is);
-    Map<String, String> headers = buildHeaders()
-            .stream()
-            .collect(Collectors.toMap(Header::getName, Header::getValue));
-    headers.put(X_LINE_ACCESS, getAuthToken());
-
-    HttpResponse<String> jsonResponse =
-        Unirest.post(url)
-                .headers(headers)
-                .fields(data)
-                .field("file", byteArray, "")
-                .asString();
-    return jsonResponse.getStatus() == 201;
+  @Override
+  public void postContent(String url, Map<String, String> data, InputStream is) throws Exception {
+    HttpPost httpPost = new HttpPost(url);
+    httpPost.addHeader(X_LINE_ACCESS, getAuthToken());
+    MultipartEntityBuilder entityBuilder = MultipartEntityBuilder.create();
+    for(Map.Entry<String, String> entry : data.entrySet()) {
+        entityBuilder.addTextBody(entry.getKey(), entry.getValue(), ContentType.APPLICATION_FORM_URLENCODED);
+    }
+    // The LINE object storage service doesn't support chunked encoding; therefore,
+    // we must be able to specify the "Content-Length" header.
+    // It can be achieved by giving Apache library either a byte array or a File object.
+    entityBuilder.addBinaryBody("file", IOUtils.toByteArray(is));
+    httpPost.setEntity(entityBuilder.build());
+    HttpResponse response = httpClient.execute(httpPost);
+    int statusCode = response.getStatusLine().getStatusCode();
+    if (statusCode != HttpStatus.SC_CREATED) {
+      throw new IOException("Fail to send request to URL " + url + ". Status: " + statusCode);
+    }
   }
 
   /**

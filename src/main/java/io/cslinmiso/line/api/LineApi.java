@@ -67,7 +67,7 @@ public interface LineApi extends Closeable {
    * http://gd2.line.naver.jp, http://gd2u.line.naver.jp are also work.
    * 
    **/
-  public static final String LINE_DOMAIN = "http://ga2.line.naver.jp";
+  public static final String LINE_DOMAIN = "https://ga2.line.naver.jp";
 
   /** The Constant LINE_HTTP_URL. */
   public static final String LINE_HTTP_URL = LINE_DOMAIN + "/api/v4/TalkService.do";
@@ -110,7 +110,8 @@ public interface LineApi extends Closeable {
 
   public static final String LINE_OBJECT_STORAGE_URL = "http://os.line.naver.jp/os/m/";
 
-  public static final String LINE_UPLOADING_URL = "https://os.line.naver.jp/talk/m/upload.nhn";
+  //public static final String LINE_UPLOADING_URL = "https://obs.line-apps.com/talk/m/upload.nhn";
+  public static final String LINE_UPLOADING_URL = "http://obs.line-apps.com/talk/m/upload.nhn";
 
   public static final String LINE_STICKER_URL = "http://dl.stickershop.line.naver.jp/products/0/0/";
 
@@ -147,7 +148,7 @@ public interface LineApi extends Closeable {
    */
   String loginWithVerifierForCertificate() throws Exception;
 
-  boolean postContent(String url, Map<String, Object> data, InputStream is) throws Exception;
+  void postContent(String url, Map<String, String> data, InputStream is) throws Exception;
 
   /*
    * (non-Javadoc)
