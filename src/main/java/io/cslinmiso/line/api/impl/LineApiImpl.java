@@ -105,7 +105,7 @@ public class LineApiImpl implements LineApi {
   private String ip = "127.0.0.1";
 
   /** The line application version. */
-  private static final String VERSION = "4.7.0";
+  private static final String VERSION = "5.1.2";
 
   /** The com_name. */
   private final String systemName;
