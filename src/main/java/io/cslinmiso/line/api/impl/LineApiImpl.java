@@ -51,7 +51,6 @@ import line.thrift.TMessageBoxWrapUp;
 import line.thrift.TMessageBoxWrapUpResponse;
 import line.thrift.TalkException;
 import line.thrift.TalkService;
-import line.thrift.TalkService.Client;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.Header;
@@ -62,7 +61,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.entity.ContentType;
-import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
@@ -70,12 +68,10 @@ import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.THttpClient;
-import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.crypto.Cipher;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
@@ -88,7 +84,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class LineApiImpl implements LineApi {
 
@@ -197,7 +192,7 @@ public class LineApiImpl implements LineApi {
     this.password = password;
     this.certificate = certificate;
     IdentityProvider provider;
-    JsonNode certResult;
+    JsonNode sessionInfo;
     String sessionKey;
     boolean keepLoggedIn = true;
     String accessLocation = this.ip;
@@ -205,17 +200,17 @@ public class LineApiImpl implements LineApi {
     // Login to LINE server.
     if (id.matches(EMAIL_REGEX)) {
       provider = IdentityProvider.LINE; // LINE
-      certResult = getCertResult(LINE_SESSION_LINE_URL);
+      sessionInfo = getJsonResult(LINE_SESSION_LINE_URL);
     } else {
       provider = IdentityProvider.NAVER_KR; // NAVER
-      certResult = getCertResult(LINE_SESSION_NAVER_URL);
+      sessionInfo = getJsonResult(LINE_SESSION_NAVER_URL);
     }
 
-    sessionKey = certResult.get("session_key").asText();
+    sessionKey = sessionInfo.get("session_key").asText();
     String message =
         (char) (sessionKey.length()) + sessionKey + (char) (id.length()) + id
             + (char) (password.length()) + password;
-    String[] keyArr = certResult.get("rsa_key").asText().split(",");
+    String[] keyArr = sessionInfo.get("rsa_key").asText().split(",");
     String keyName = keyArr[0];
     String n = keyArr[1];
     String e = keyArr[2];
@@ -313,7 +308,7 @@ public class LineApiImpl implements LineApi {
    * @see api.line.LineApi#loginWithVerifier()
    */
   public String loginWithVerifierForCertificate() throws Exception {
-    JsonNode certResult = getCertResult(LINE_CERTIFICATE_URL);
+    JsonNode certResult = getJsonResult(LINE_CERTIFICATE_URL);
 
     // login with verifier
     JsonNode resultNode = certResult.get("result");
@@ -332,10 +327,9 @@ public class LineApiImpl implements LineApi {
     }
   }
 
-  private JsonNode getCertResult(String url) throws Exception {
+  private JsonNode getJsonResult(String url) throws Exception {
 
     HttpGet httpGet = new HttpGet(url);
-
     String authToken = getAuthToken();
     if (authToken != null) {
       httpGet.setHeader(X_LINE_ACCESS, authToken);
