@@ -108,10 +108,7 @@ public interface LineApi extends Closeable {
 
   public static final String LINE_PROFILE_URL = "http://dl.profile.line.naver.jp";
 
-  public static final String LINE_OBJECT_STORAGE_URL = "http://os.line.naver.jp/os/m/";
-
-  //public static final String LINE_UPLOADING_URL = "https://obs.line-apps.com/talk/m/upload.nhn";
-  public static final String LINE_UPLOADING_URL = "http://obs.line-apps.com/talk/m/upload.nhn";
+  public static final String LINE_UPLOADING_URL = "https://obs.line-apps.com/talk/m/upload.nhn";
 
   public static final String LINE_STICKER_URL = "http://dl.stickershop.line.naver.jp/products/0/0/";
 
