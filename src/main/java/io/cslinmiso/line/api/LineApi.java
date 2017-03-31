@@ -63,11 +63,33 @@ public interface LineApi extends Closeable {
 
   /**
    * The Constant LINE_DOMAIN.
-   * 
-   * http://gd2.line.naver.jp, http://gd2u.line.naver.jp are also work.
+   * LINE MESSENGER :: MESSAGE PROTOCOL
+      31/03/2017
+
+      http://gf.line.naver.jp <- Open AuthCT
+      http://gm.line.naver.jp <- Open AuthCT
+      http://gw.line.naver.jp <- Open AuthCT
+      http://gfs.line.naver.jp <- Open AuthCT
+      http://gfu.line.naver.jp <- Open AuthCT
+      http://gfg.line.naver.jp <- Open AuthCT
+      http://gfk.line.naver.jp <- Open AuthCT
+      http://gfp.line.naver.jp <- Open AuthCT
+      http://gfv.line.naver.jp <- Open AuthCT
+      http://gbu.line.naver.jp <- Open AuthCT
+      http://gd2.line.naver.jp <- Used for BOT [PATCHED]
+      http://gwg.line.naver.jp <- Open AuthCT
+      http://gd2g.line.naver.jp <- Open AuthCT
+      http://gd2u.line.naver.jp <- Open AuthCT
+      http://gd2v.line.naver.jp <- Open AuthCT
+      http://gfpk.line.naver.jp <- Open AuthCT
+      http://gfps.line.naver.jp <- Open AuthCT
+      http://gfpu.line.naver.jp <- Open AuthCT (slow but work)
+      http://gfpv.line.naver.jp <- Open AuthCT
+      http://gfpw.line.naver.jp <- Open AuthCT
+   *  are also work.
    * 
    **/
-  public static final String LINE_DOMAIN = "https://ga2.line.naver.jp";
+  public static final String LINE_DOMAIN = "https://gd2g.line.naver.jp";
 
   /** The Constant LINE_HTTP_URL. */
   public static final String LINE_HTTP_URL = LINE_DOMAIN + "/api/v4/TalkService.do";
