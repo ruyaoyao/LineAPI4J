@@ -32,14 +32,13 @@
 
 package io.cslinmiso.line.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import line.thrift.Contact;
 import line.thrift.Room;
 import line.thrift.TalkException;
-
 import org.apache.thrift.TException;
+
+import java.util.ArrayList;
+import java.util.List;
 
 public class LineRoom extends LineBase {
 

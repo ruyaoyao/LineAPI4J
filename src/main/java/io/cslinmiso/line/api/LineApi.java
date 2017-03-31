@@ -31,13 +31,6 @@
 
 package io.cslinmiso.line.api;
 
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import io.cslinmiso.line.model.LoginCallback;
 import line.thrift.AuthQrcode;
 import line.thrift.Contact;
@@ -50,13 +43,16 @@ import line.thrift.Room;
 import line.thrift.TMessageBoxWrapUp;
 import line.thrift.TMessageBoxWrapUpResponse;
 import line.thrift.TalkException;
-import line.thrift.TalkService.Client;
-
 import org.apache.thrift.TException;
-import org.apache.thrift.transport.TTransportException;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * <pre> LineApi, TODO: add Class Javadoc here. </pre>
@@ -71,7 +67,7 @@ public interface LineApi extends Closeable {
    * http://gd2.line.naver.jp, http://gd2u.line.naver.jp are also work.
    * 
    **/
-  public static final String LINE_DOMAIN = "http://ga2.line.naver.jp";
+  public static final String LINE_DOMAIN = "https://ga2.line.naver.jp";
 
   /** The Constant LINE_HTTP_URL. */
   public static final String LINE_HTTP_URL = LINE_DOMAIN + "/api/v4/TalkService.do";
@@ -112,9 +108,7 @@ public interface LineApi extends Closeable {
 
   public static final String LINE_PROFILE_URL = "http://dl.profile.line.naver.jp";
 
-  public static final String LINE_OBJECT_STORAGE_URL = "http://os.line.naver.jp/os/m/";
-
-  public static final String LINE_UPLOADING_URL = "https://os.line.naver.jp/talk/m/upload.nhn";
+  public static final String LINE_UPLOADING_URL = "https://obs.line-apps.com/talk/m/upload.nhn";
 
   public static final String LINE_STICKER_URL = "http://dl.stickershop.line.naver.jp/products/0/0/";
 
@@ -151,14 +145,7 @@ public interface LineApi extends Closeable {
    */
   String loginWithVerifierForCertificate() throws Exception;
 
-  /*
-   * (non-Javadoc)
-   * 
-   * @see io.cslinmiso.line.api.LineApi#getCertResult(java.lang.String)
-   */
-  Map getCertResult(String url) throws Exception;
-
-  boolean postContent(String url, Map<String, Object> data, InputStream is) throws Exception;
+  void postContent(String url, Map<String, String> data, InputStream is) throws Exception;
 
   /*
    * (non-Javadoc)
@@ -374,7 +361,7 @@ public interface LineApi extends Closeable {
    */
   TMessageBoxWrapUpResponse getMessageBoxCompactWrapUpList(int start, int count) throws Exception;
 
-  String getLineAccessToken();
+  String getAuthToken();
 
   String getCertificate();
 
