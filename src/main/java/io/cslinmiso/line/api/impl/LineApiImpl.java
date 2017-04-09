@@ -39,6 +39,7 @@ import io.cslinmiso.line.api.LineApi;
 import io.cslinmiso.line.model.LoginCallback;
 import line.thrift.AuthQrcode;
 import line.thrift.Contact;
+import line.thrift.ContactSetting;
 import line.thrift.Group;
 import line.thrift.IdentityProvider;
 import line.thrift.LoginResult;
@@ -47,6 +48,8 @@ import line.thrift.Message;
 import line.thrift.Operation;
 import line.thrift.Profile;
 import line.thrift.Room;
+import line.thrift.Settings;
+import line.thrift.SettingsAttribute;
 import line.thrift.TMessageBoxWrapUp;
 import line.thrift.TMessageBoxWrapUpResponse;
 import line.thrift.TalkException;
@@ -373,7 +376,6 @@ public class LineApiImpl implements LineApi {
   public boolean updateAuthToken() throws Exception {
     if (this.certificate != null) {
       this.login(this.id, this.password, this.certificate, null);
-      this.loginWithAuthToken(this.authToken);
       return true;
     } else {
       throw new Exception("You need to login first. There is no valid certificate");
@@ -452,6 +454,11 @@ public class LineApiImpl implements LineApi {
   public Map<String, Contact> findAndAddContactsByPhone(int reqSeq, Set<String> phones)
       throws TalkException, TException {
     return this.client.findAndAddContactsByPhone(0, phones);
+  }
+
+  @Override
+  public Map<String, Contact> findAndAddContactsByMid(int reqSeq, String mid) throws TException {
+    return client.findAndAddContactsByMid(reqSeq, mid);
   }
 
   /**
@@ -542,10 +549,16 @@ public class LineApiImpl implements LineApi {
     return this.client.getGroupIdsInvited();
   }
 
+  @Override
   public void acceptGroupInvitation(int seq, String groupId) throws TalkException, TException {
     /** Accept a group invitation **/
     // seq = 0;
     this.client.acceptGroupInvitation(seq, groupId);
+  }
+
+  @Override
+  public void rejectGroupInvitation(int seq, String groupId) throws TException {
+    this.client.rejectGroupInvitation(seq, groupId);
   }
 
   public void cancelGroupInvitation(int seq, String groupId, List<String> contactIds)
@@ -577,6 +590,11 @@ public class LineApiImpl implements LineApi {
   public List<Message> getRecentMessages(String id, int count) throws TalkException, TException {
     /** Get recent messages from `id` **/
     return this.client.getRecentMessages(id, count);
+  }
+
+  @Override
+  public List<Message> getNextMessages(String messageBoxId, long startSeq, int messagesCount) throws TException {
+    return this.client.getNextMessages(messageBoxId, startSeq, messagesCount);
   }
 
   public Message sendMessage(int seq, Message message) throws TalkException, TException {
@@ -611,6 +629,36 @@ public class LineApiImpl implements LineApi {
     } catch (Exception e) {
       throw new Exception(e.getMessage());
     }
+  }
+
+  @Override
+  public void updateContactSetting(int seq, String mid, ContactSetting contactSetting, String value) throws TException {
+    client.updateContactSetting(seq, mid, contactSetting, value);
+  }
+
+  @Override
+  public void updateSettingsAttribute(int seq, SettingsAttribute attribute, String value) throws TException {
+    client.updateSettingsAttribute(seq, attribute, value);
+  }
+
+  @Override
+  public int updateSettingsAttributes(int seq, int attrBitSet, Settings settings) throws TException {
+    return client.updateSettingsAttributes(seq, attrBitSet, settings);
+  }
+
+  @Override
+  public int updateSettings2(int seq, Settings settings) throws TException {
+    return client.updateSettings2(seq, settings);
+  }
+
+  @Override
+  public Settings getSettings() throws TException {
+    return client.getSettings();
+  }
+
+  @Override
+  public Settings getSettingsAttribute(int attrBitSet) throws TException {
+    return client.getSettingsAttributes(attrBitSet);
   }
 
   private void setAuthToken(String token) {
