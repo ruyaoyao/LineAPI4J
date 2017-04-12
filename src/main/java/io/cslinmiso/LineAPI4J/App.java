@@ -75,7 +75,6 @@ public class App
         InputStream is = new FileInputStream(file);
         someoneContact.sendImage(is);
         
-        someoneContact.sendImageWithURL("https://goo.gl/qXdQrf");
 		// send the sticker
         someoneContact.sendSticker("13", "1", "100", "");
 		// send the message

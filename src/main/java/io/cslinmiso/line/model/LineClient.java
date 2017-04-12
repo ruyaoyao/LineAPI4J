@@ -75,11 +75,11 @@ public class LineClient implements Closeable {
   List<LineRoom> rooms;
   List<LineGroup> groups;
 
-  public LineClient() throws Exception {
+  public LineClient() {
     this(new LineApiImpl());
   }
 
-  public LineClient(LineApi api) throws Exception {
+  public LineClient(@Nonnull LineApi api) {
     this.api = api;
   }
 
@@ -341,13 +341,14 @@ public class LineClient implements Closeable {
 
       while (true) {
         TMessageBoxWrapUpResponse channel = this.api.getMessageBoxCompactWrapUpList(start, count);
-        for (TMessageBoxWrapUp box : channel.messageBoxWrapUpList) {
+        List<TMessageBoxWrapUp> msgBoxWrapUps = channel.getMessageBoxWrapUpList();
+        for (TMessageBoxWrapUp box : msgBoxWrapUps) {
           if (box.messageBox.midType == MIDType.ROOM) {
             LineRoom room = new LineRoom(this, this.api.getRoom(box.messageBox.id));
             this.rooms.add(room);
           }
         }
-        if (channel.messageBoxWrapUpList.size() == count) {
+        if (msgBoxWrapUps.size() == count) {
           start += count;
         } else {
           break;

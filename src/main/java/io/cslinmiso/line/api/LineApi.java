@@ -34,12 +34,15 @@ package io.cslinmiso.line.api;
 import io.cslinmiso.line.model.LoginCallback;
 import line.thrift.AuthQrcode;
 import line.thrift.Contact;
+import line.thrift.ContactSetting;
 import line.thrift.Group;
 import line.thrift.LoginResult;
 import line.thrift.Message;
 import line.thrift.Operation;
 import line.thrift.Profile;
 import line.thrift.Room;
+import line.thrift.Settings;
+import line.thrift.SettingsAttribute;
 import line.thrift.TMessageBoxWrapUp;
 import line.thrift.TMessageBoxWrapUpResponse;
 import line.thrift.TalkException;
@@ -216,6 +219,8 @@ public interface LineApi extends Closeable {
   Map<String, Contact> findAndAddContactsByPhone(int reqSeq, Set<String> phone)
       throws TalkException, TException;
 
+  Map<String, Contact> findAndAddContactsByMid(int reqSeq, String mid) throws TException;
+
   /*
    * (non-Javadoc)
    * 
@@ -314,6 +319,15 @@ public interface LineApi extends Closeable {
    */
   void acceptGroupInvitation(int seq, String groupId) throws TalkException, TException;
 
+  /**
+   * Reject the invitation of this user to a group.
+   *
+   * @param seq     Sequence ID.
+   * @param groupId Group ID.
+   * @throws TException Thrift error occurs.
+   */
+  void rejectGroupInvitation(int seq, String groupId) throws TException;
+
   /*
    * (non-Javadoc)
    * 
@@ -347,6 +361,8 @@ public interface LineApi extends Closeable {
    * @see io.cslinmiso.line.api.LineApi#_getRecentMessages(java.lang.String, int)
    */
   List<Message> getRecentMessages(String id, int count) throws TalkException, TException;
+
+  List<Message> getNextMessages(String messageBoxId, long startSeq, int messagesCount) throws TException;
 
   /*
    * (non-Javadoc)
@@ -382,6 +398,18 @@ public interface LineApi extends Closeable {
    * @see io.cslinmiso.line.api.LineApi#_getMessageBoxCompactWrapUpList(int, int)
    */
   TMessageBoxWrapUpResponse getMessageBoxCompactWrapUpList(int start, int count) throws Exception;
+
+  void updateContactSetting(int seq, String mid, ContactSetting contactSetting, String value) throws TException;
+
+  void updateSettingsAttribute(int seq, SettingsAttribute attribute, String value) throws TException;
+
+  int updateSettingsAttributes(int seq, int attrBitSet, Settings settings) throws TException;
+
+  Settings getSettings() throws TException;
+
+  Settings getSettingsAttribute(int attrBitSet) throws TException;
+
+  int updateSettings2(int seq, Settings settings) throws TException;
 
   String getAuthToken();
 
